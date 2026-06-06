@@ -1,0 +1,63 @@
+site_name: coldscore + coldbench
+site_description: Model-agnostic библиотека переноса скоров на cold-start айтемы + бенчмарк
+docs_dir: docs
+
+validation:
+  nav:
+    omitted_files: ignore       # отдельные прогоны в results/ намеренно не в nav
+  absolute_links: ignore
+  unrecognized_links: ignore
+
+theme:
+  name: material
+  language: ru
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Тёмная тема
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Светлая тема
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.highlight
+
+nav:
+  - Главная: index.md
+  - Методы: methods.md
+  - Датасеты: datasets.md
+  - Протокол оценки: eval-protocol.md
+  - Результаты:
+      - Полная матрица 3×3: results/full_matrix.md
+      - Разброс по сидам: results/seeds.md
+      - Deep / [EMB]: results/deep.md
+      - KION текст vs категории: results/kion_text.md
+  - API Reference: api.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: sphinx
+            show_source: false
+            show_signature_annotations: true
+            separate_signature: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - tables
+  - toc:
+      permalink: true

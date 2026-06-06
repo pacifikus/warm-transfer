@@ -1,0 +1,82 @@
+[project]
+name = "coldscore"
+version = "0.1.0"
+description = "Model-agnostic plug&play библиотека для трансфера и калибровки скоров рекомендательной модели на cold-start айтемы"
+readme = "README.md"
+authors = [
+    { name = "Nikita Tenishev", email = "nik.tenishev@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    # === lightweight core: только то, что нужно для применения методов и метрик ===
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "scipy>=1.11",
+    "scikit-learn>=1.4",   # Ridge / LogReg / cosine — лёгкие, без тяжёлых трансформеров
+    "pydantic>=2.6",       # валидация на границах: конфиги, схемы публичного API
+]
+
+[project.optional-dependencies]
+deep = [
+    "torch>=2.2",          # DeepLinMap, Two-Tower, полный SimCSR (MPS на M1 / CUDA на RTX)
+]
+bench = [
+    # === тяжёлые движки доноров и инфраструктура бенчмарка ===
+    "implicit>=0.7",       # ALS + BPR (семья матричной факторизации)
+    "catboost>=1.2",       # бустинг на признаках
+    "rectools>=0.13",      # обёртки моделей + сверка конвенций
+    # NB: lightfm намеренно не подключён — его sdist не собирается с новым setuptools,
+    #     колёс под py3.11/arm нет. BPR берём из implicit (та же MF/BPR-семья).
+    "pyarrow>=15",         # parquet-артефакты и кэш скоров
+    "pyyaml>=6.0",
+    "tabulate>=0.9",       # markdown-таблицы результатов
+    "tqdm>=4.66",
+    "psutil>=5.9",         # замер latency / RSS
+    "requests>=2.31",      # скачивание датасетов
+]
+all = ["coldscore[deep,bench]"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+    "hypothesis>=6.0",     # property-based тесты для метрик и сплиттера
+    "pyright>=1.1.390",    # проверка типов из CLI
+]
+docs = [
+    "mkdocs-material>=9.5",          # тема сайта документации (как у современных либ)
+    "mkdocstrings[python]>=0.26",    # авто-API из docstring'ов
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/coldscore", "src/coldbench"]
+
+[project.scripts]
+coldbench = "coldbench.__main__:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["RUF001", "RUF002", "RUF003"]  # кириллица в комментариях/строках — это ОК
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "bench: тесты, требующие тяжёлых зависимостей (extra 'bench'); пропускаются без них",
+]
+addopts = "-q --strict-markers"
+
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.11"
+typeCheckingMode = "standard"
+reportMissingImports = "warning"
