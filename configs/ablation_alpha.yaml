@@ -1,0 +1,47 @@
+# Абляция регуляризации Ridge у LinMap (ML-1M × ALS).
+# Цель — чувствительность LinMap к alpha; ожидаем плато в широком диапазоне.
+
+datasets:
+  - ml-1m
+
+donors:
+  - name: als
+    params:
+      factors: 64
+      regularization: 0.05
+      iterations: 20
+
+methods:
+  - name: linmap
+    label: linmap_a0.1
+    params:
+      alpha: 0.1
+  - name: linmap
+    label: linmap_a1
+    params:
+      alpha: 1.0
+  - name: linmap
+    label: linmap_a10
+    params:
+      alpha: 10.0
+  - name: linmap
+    label: linmap_a100
+    params:
+      alpha: 100.0
+  - name: linmap
+    label: linmap_a1000
+    params:
+      alpha: 1000.0
+
+splitter:
+  name: pseudo_cold
+  params:
+    cold_frac: 0.2
+    val_frac: 0.1
+    n_pop_buckets: 5
+    min_item_interactions: 5
+
+metrics_ks: [1, 5, 10]
+seeds: [42]
+max_eval_users: 2000
+out_dir: docs/results

@@ -1,0 +1,49 @@
+# Абляция числа соседей k у наивного KNN (ML-1M × ALS).
+# Цель — показать, что наивный KNN не дотягивает до цели ни при каком k (популярностный bias).
+
+datasets:
+  - ml-1m
+
+donors:
+  - name: als
+    params:
+      factors: 64
+      regularization: 0.05
+      iterations: 20
+
+methods:
+  - name: grouped_most_popular_pers
+    label: target_grouped_pers
+  - name: knn_score_avg
+    label: knn_k5
+    params:
+      k: 5
+  - name: knn_score_avg
+    label: knn_k10
+    params:
+      k: 10
+  - name: knn_score_avg
+    label: knn_k20
+    params:
+      k: 20
+  - name: knn_score_avg
+    label: knn_k50
+    params:
+      k: 50
+  - name: knn_score_avg
+    label: knn_k100
+    params:
+      k: 100
+
+splitter:
+  name: pseudo_cold
+  params:
+    cold_frac: 0.2
+    val_frac: 0.1
+    n_pop_buckets: 5
+    min_item_interactions: 5
+
+metrics_ks: [1, 5, 10]
+seeds: [42]
+max_eval_users: 2000
+out_dir: docs/results

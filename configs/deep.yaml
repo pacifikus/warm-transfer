@@ -1,0 +1,43 @@
+# Deep-методы ([EMB], CPU): DropoutNet против LinMap/stacking_plus/цели на 3 доменах × ALS.
+
+datasets:
+  - ml-1m
+  - goodbooks
+  - kion
+
+donors:
+  - name: als
+    params:
+      factors: 64
+      regularization: 0.05
+      iterations: 20
+
+methods:
+  - name: grouped_most_popular_pers
+  - name: linmap
+  - name: stacking_plus
+  - name: embedding_avg
+    params:
+      k: 20
+  - name: attention_emb
+    params:
+      k: 20
+      temperature: 0.1
+  - name: dropoutnet
+    params:
+      hidden: 128
+      epochs: 200
+      dropout_pref: 0.5
+
+splitter:
+  name: pseudo_cold
+  params:
+    cold_frac: 0.2
+    val_frac: 0.1
+    n_pop_buckets: 5
+    min_item_interactions: 5
+
+metrics_ks: [1, 5, 10]
+seeds: [42]
+max_eval_users: 2000
+out_dir: docs/results

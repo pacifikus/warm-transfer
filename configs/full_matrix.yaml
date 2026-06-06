@@ -1,0 +1,65 @@
+# Полная матрица: 3 домена × 3 донора × все методы (seed=42).
+# embedding_avg ([EMB]) автоматически пропускается на CatBoost (нет эмбеддингов).
+
+datasets:
+  - ml-1m
+  - goodbooks
+  - kion
+
+donors:
+  - name: als
+    params:
+      factors: 64
+      regularization: 0.05
+      iterations: 20
+  - name: bpr
+    params:
+      factors: 64
+      learning_rate: 0.01
+      regularization: 0.01
+      iterations: 100
+  - name: catboost
+    params:
+      iterations: 100
+      depth: 6
+      neg_ratio: 4
+
+methods:
+  - name: random
+  - name: most_popular
+  - name: grouped_most_popular
+  - name: grouped_most_popular_pers
+  - name: knn_score_avg
+    params:
+      k: 20
+  - name: embedding_avg
+    params:
+      k: 20
+  - name: attention_knn
+    params:
+      k: 20
+      temperature: 0.1
+  - name: debiased_knn
+    params:
+      k: 20
+  - name: linmap
+  - name: logreg_calib
+    params:
+      k: 20
+  - name: stacking
+    params:
+      k: 20
+  - name: stacking_plus
+
+splitter:
+  name: pseudo_cold
+  params:
+    cold_frac: 0.2
+    val_frac: 0.1
+    n_pop_buckets: 5
+    min_item_interactions: 5
+
+metrics_ks: [1, 5, 10]
+seeds: [42]
+max_eval_users: 2000
+out_dir: docs/results
