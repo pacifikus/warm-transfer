@@ -13,22 +13,35 @@ theme:
   name: material
   language: en
   palette:
-    - scheme: default
-      primary: indigo
-      accent: indigo
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Follow system theme
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
       toggle:
         icon: material/weather-night
         name: Dark mode
-    - scheme: slate
-      primary: indigo
-      accent: indigo
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
       toggle:
         icon: material/weather-sunny
         name: Light mode
   features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.indexes
     - navigation.sections
     - navigation.top
+    - toc.follow
     - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - search.suggest
     - search.highlight
 
 nav:
@@ -106,12 +119,31 @@ plugins:
             show_source: false
             show_signature_annotations: true
             separate_signature: true
+            signature_crossrefs: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            summary: true
+            filters: ["!^_"]
 
 markdown_extensions:
   - admonition
   - attr_list
   - md_in_html
-  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets:
+      base_path: .
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight
   - tables
   - toc:

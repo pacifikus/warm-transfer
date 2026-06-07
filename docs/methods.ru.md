@@ -1,123 +1,56 @@
-# Методы cold-start трансфера
+# Методы: матрица возможностей
 
-Легенда доступа: **[MA]** — model-agnostic post-hoc (нужны только warm-скоры + контент);
-**[EMB]** — нужен доступ к эмбеддингам донора; **[TRAIN]** — нужно вмешательство в обучение.
+Каждый метод — это `ColdStartMethod`: он объявляет `requires`, обучается на `TransferInputs` и
+предсказывает long-format `[user_id, item_id, score]` для cold items.
 
-## Главный вывод ресёрча
+## Как читать матрицу
 
-Наивные методы (равномерное KNN-усреднение скоров, LogReg-калибровка, embedding-avg)
-**проигрывают бейзлайну Grouped Most Popular**, потому что неявно воспроизводят
-**глобальную популярность соседей**. Grouped MP честнее оценивает популярность внутри
-категории cold-айтема. Поэтому победа достигается не заменой бейзлайна, а:
-1. использованием бейзлайна как **фичи/якоря** (Stacking, scale&shift);
-2. **дебиасингом популярности** в контентном сигнале;
-3. **attention-взвешиванием соседей по контенту** вместо равномерного усреднения (SimCSR).
+- **Requires** — точные input kinds, объявленные registered class.
+- **Model-agnostic** значит, что методу нужны выгруженные scores/interactions/content, а не
+  внутренности донора.
+- **Popularity pull** отмечает методы, которые могут наследовать popularity warm-neighbor items, если
+  benchmark не докажет обратное.
 
-## Бейзлайны (референс)
+| Method | Requires | Family | Model-agnostic | Calibrates scale | Popularity pull | First try when... |
+|---|---|---|---|---|---|---|
+| `linmap` | `content`, `donor_scores` | score-space mapping | yes | yes | low | есть donor scores и item content |
+| `stacking_plus` | `content`, `donor_scores`, `train_interactions`, `val` | supervised hybrid | yes | yes | low | есть val-cold fold |
+| `stacking` | `content`, `donor_scores`, `similarity`, `train_interactions`, `val` | supervised hybrid | yes | yes | medium | нужен KNN signal плюс affinity/popularity features |
+| `scale_shift` | `content`, `donor_scores`, `similarity` | score calibration | yes | yes | medium | нужен scale/shift diagnostic поверх KNN scores |
+| `logreg_calib` | `content`, `donor_scores`, `similarity`, `val` | supervised calibration | yes | yes | medium | нужен supervised diagnostic с val-cold labels |
+| `knn_score_avg` | `content`, `donor_scores`, `similarity` | content neighbors | yes | no | high | нужен самый простой neighbor-score baseline |
+| `attention_knn` | `content`, `donor_scores`, `similarity` | content neighbors | yes | no | high | нужны softmax-weighted neighbors |
+| `debiased_knn` | `content`, `donor_scores`, `similarity` | content neighbors | yes | no | medium | тестируете popularity subtraction |
+| `linmap_emb` | `content`, `embeddings` | embedding mapping | no | yes | low | donor отдаёт user/item embeddings |
+| `magnitude_scaling` | `content`, `embeddings` | embedding debiasing | no | yes | low | cold embedding norms выглядят overconfident |
+| `dropoutnet` | `content`, `embeddings` | neural embedding mapping | no | yes | low | можно использовать `torch` и donor embeddings |
+| `embedding_avg` | `content`, `embeddings`, `similarity` | embedding neighbors | no | no | high | нужен простой embedding-neighbor baseline |
+| `attention_emb` | `content`, `embeddings`, `similarity` | embedding neighbors | no | no | medium | нужен attention over neighbor embeddings |
+| `grouped_most_popular_pers` | `content`, `train_interactions` | baseline | yes | no | intended | нужен главный сильный baseline |
+| `grouped_most_popular` | `content`, `train_interactions` | baseline | yes | no | intended | нужна неперсонализированная grouped popularity |
+| `most_popular` | `train_interactions` | baseline | yes | no | intended | нужна global popularity |
+| `random` | none | baseline | yes | no | none | нужен sanity-check floor |
 
-| Метод | Идея | Доступ |
-|---|---|---|
-| `random` | случайный скор | [MA] |
-| `most_popular` | глобальная популярность айтема | [MA] |
-| `grouped_most_popular` | глобальная популярность жанра cold-айтема (одинаково всем юзерам) | [MA] |
-| `grouped_most_popular_pers` | **персонализированный**: аффинность юзера к жанрам cold-айтема по его истории. **Главный target (per-user AUC ≈ 0.72; внешний бейзлайн ≈ 0.709)** | [MA] |
-| `cold_only` | модель, обученная только на cold-данных | — |
+## Recommended path
 
-## Наивные методы агрегации (reference)
+1. Начните с `grouped_most_popular_pers` и `linmap`.
+2. Добавьте `stacking_plus`, если есть validation-cold fold.
+3. Используйте KNN и embedding-neighbor methods как diagnostics для popularity inheritance.
+4. Используйте embedding methods только если donor отдаёт embeddings.
 
-| Метод | Идея | Доступ |
-|---|---|---|
-| `knn_score_avg` | усреднение скоров k ближайших по контенту warm-айтемов | [MA] |
-| `logreg_calib` | LogReg-калибровка скоров k соседей + скор модели | [MA] |
-| `embedding_avg` | усреднение эмбеддингов соседей | [EMB] |
+См. [Семейства методов](explanation/methods-families.md) для концепций и
+[главные результаты](results/full_matrix.md) для benchmark table.
 
-## Сильные кандидаты (цель — обойти Grouped MP) — РЕАЛИЗОВАНО
+## Важная поправка про calibration
 
-Эмпирический итог (ML-1M + Goodbooks, донор ALS; цель — `grouped_most_popular_pers`):
+Platt и isotonic calibration — монотонные преобразования. Они могут улучшить probability quality
+(logloss/Brier), но не меняют rank-based metrics и AUC. Если метод проигрывает по AUC, проблема в
+ranking, а не в score calibration.
 
-| Метод | Идея | Доступ | Результат |
-|---|---|---|---|
-| `linmap` | Ridge `content → вектор скоров донора по всем юзерам` (multi-output), для cold применяем ту же регрессию. = Individual predictor SimCSR в score-пространстве | [MA] | **🏆 лучший.** ML-1M: бьёт цель по ВСЕМ метрикам (ndcg@10 0.274 vs 0.213, AUC 0.723 vs 0.720). Goodbooks: бьёт по AUC (0.773 vs 0.606), уступает по top-k |
-| `stacking` | мета-логрег: target = факт взаимодействия на val-cold, features = `[genre affinity, genre popularity, knn donor score]` (бейзлайн как фича) | [MA] | сильный. Бьёт цель по ranking на ML-1M (ndcg@10 0.224), маргинально уступает по per-user AUC |
-| `attn_knn` | softmax-attention по k контентным соседям (SimCSR-lite): вес = `softmax(sim/τ)`, value = скор соседа | [MA] | на уровне наивного KNN: проигрывает GroupedMP_pers (популярностный bias соседей сохраняется) |
-| `debiased_knn` | KNN с вычитанием популярностного компонента соседей | [MA] | слабее KNN по AUC — дебиасинг убирает полезный сигнал |
-| `scale_shift` | контентный KNN над скорами + стандартизация каждого cold-айтема по юзерам и подгонка к warm-статистике (scale `σ*`, shift `μ*`) — идея MWUF на скорах | [MA] | ⚠️ **слабый**: ML-1M AUC 0.652, KION 0.628 (ниже цели). Поюзерная нормализация убивает межайтемный сигнал. Честный отрицательный результат |
+## References
 
-**Ключевая находка:** в score-пространстве **прямое линейное отображение контента в скоры
-донора (LinMap) оказалось сильнее** attention/стэкинга на knn-сигнале. Оно переносит выученную
-донором латентную структуру (включая персонализацию) через контент без популярностного
-усреднения, которое топит наивный KNN.
-
-### `stacking_plus` — гибрид (самый робастный)
-
-`stacking_plus` [MA] — мета-логрег над **[linmap_score, genre_affinity, genre_popularity]**,
-обучаемый на val-cold. Использует сильный сигнал LinMap И персонализированную популярность
-(сильную в top-k) как фичи. Результат: **на ML-1M×ALS бьёт все методы, включая LinMap, по
-каждой метрике**; робастен по датасетам и донорам; рекомендуется по умолчанию, когда есть
-val-cold фолд. См. таблицы в `results/full_matrix.md`.
-
-## [EMB]-методы (эмбеддинги донора) — РЕАЛИЗОВАНО
-
-Эти методы используют латентные факторы донора (ALS/BPR/Two-Tower отдают; CatBoost и EASE — нет,
-метод пропускается). Эмпирический итог (фокусный срез: 3 домена × ALS):
-
-| Метод | Идея | Доступ | Результат |
-|---|---|---|---|
-| `embedding_avg` | равномерное среднее эмбеддингов k контентных соседей | [EMB] | слабейший [EMB]: на уровне наивного knn (~0.69 AUC ml-1m) |
-| `attention_emb` | softmax-взвешенное по контенту среднее эмбеддингов соседей (SimCSR на уровне IT) | [EMB] | лучше embedding_avg за счёт острых весов |
-| `linmap_emb` | Ridge `content → латентные факторы донора` (Gantner, ICDM 2010); cold-скор = `user · cold_emb` | [EMB] | **≡ `linmap`** на ALS/BPR (см. ниже): ML-1M AUC 0.723, KION 0.739 — идентично linmap |
-| `magnitude_scaling` | `linmap_emb` + дебиасинг популярности: норма cold-эмбеддинга стягивается к средней warm-норме `μ_w` (MS, RecSys 2025) | [EMB] | слегка **хуже** linmap_emb (ML-1M 0.715, KION 0.725): здесь база не переоценивает популярные cold-айтемы, и выравнивание норм убирает сигнал |
-| `dropoutnet` | MLP [латент донора (dropout) ⊕ контент]→латент; cold: латент=0 (Volkovs 2017) | [EMB], torch | **лучший ranking на ML-1M** (ndcg@10 0.280, p@1 0.396); на KION слабее линейных |
-
-DropoutNet — единственный нейросетевой метод (extra `deep`, torch, CPU). На ML-1M даёт
-сильнейшее ранжирование, но не универсален: на разреженном implicit-KION уступает LinMap.
-
-### 🔑 Находка: `linmap_emb` (Gantner) ≡ `linmap` для bilinear-доноров
-
-Эмпирически `linmap_emb` дал **посимвольно те же метрики**, что `linmap`, на ML-1M и KION с
-ALS. Это не баг, а **доказуемое тождество**: для донора со скором-скалярным-произведением
-(`score(u,i) = U_u · V_i`, как у ALS/BPR) матрица warm-скоров равна `S = V_warm · Uᵀ`. Ridge
-линеен по таргету, регуляризация `αI` живёт в пространстве признаков (одинакова для обоих):
-
-    W_linmap = (XᵀX + αI)⁻¹ Xᵀ S = (XᵀX + αI)⁻¹ Xᵀ (V_warm Uᵀ) = W_emb · Uᵀ,
-
-поэтому `X_cold · W_linmap = (X_cold · W_emb) · Uᵀ` — ровно предсказание `linmap_emb`. То есть
-наш `linmap` в score-пространстве **и есть** attribute-to-latent Gantner для bilinear-доноров.
-Gantner начинает отличаться только когда скор донора **не билинеен** (CatBoost, +bias-члены) —
-тогда контент→факторы и контент→скор расходятся. Практический вывод: на ALS/BPR отдельный
-`linmap_emb` избыточен; ценность Gantner-маппинга — для нелинейных доноров.
-
-### `magnitude_scaling` (Magnitude Scaling, RecSys 2025)
-
-Post-hoc дебиасинг: меняет **только длину** cold-эмбеддинга (не направление), стягивая норму к
-средней warm-норме `μ_w`. Магнитуда — прокси популярности (большая норма → систематически
-высокий скор). Помогает там, где cold-генератор **переоценивает** популярные айтемы (failure
-mode из статьи на Amazon/Microlens). На наших данных (ML-1M/KION) база этим не страдает, поэтому
-MS слегка вредит — честный, ожидаемый результат: метод целевой, а не универсальный. Полезен как
-диагностический инструмент и регулятор хвоста.
-
-## Задел (не реализовано)
-
-- полный SimCSR над interaction features [EMB] — частично покрыт `attention_emb`/`attention_knn`.
-- `deeplinmap` — MLP `content → score` [MA, extra `deep`].
-- `mwuf` — meta scaling & shifting [TRAIN].
-
-## Про калибровку (важная поправка)
-
-Platt / isotonic калибровка — **монотонное** преобразование скоров. Поэтому она **НЕ меняет
-ни ranking-метрики (Recall/NDCG/MAP/MRR), ни AUC** — все они rank-based и инвариантны к
-монотонным преобразованиям. Калибровка улучшает только **logloss/Brier** (качество вероятностей).
-
-⚠️ Следствие: слабый AUC LinMap с CatBoost-донором — это проблема **ранжирования**, а не
-калибровки; Platt/isotonic его не починят. Лечение — гибрид (`stacking_plus`), добавляющий
-независимый от донора, хорошо ранжирующий сигнал (genre affinity). Калибровку оставляем как
-опциональную пост-обработку для задач, где важна вероятность (logloss), а не порядок.
-
-## Ссылки
-
-- SimCSR — Han & Chun, «Addressing the Item Cold-Start Using Similar Warm Items», 2021
+- SimCSR — Han & Chun, "Addressing the Item Cold-Start Using Similar Warm Items", 2021
 - DropoutNet — Volkovs et al., NeurIPS 2017
 - MWUF — Zhu et al., SIGIR 2021, arXiv:2105.04790
-- Gantner et al., «Learning Attribute-to-Feature Mappings», ICDM 2010
+- Gantner et al., "Learning Attribute-to-Feature Mappings", ICDM 2010
 - On Inherited Popularity Bias in Cold-Start, RecSys 2025, arXiv:2510.11402
-- ColdRec toolkit — github.com/YuanchenBei/ColdRec
