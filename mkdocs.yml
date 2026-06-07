@@ -33,15 +33,31 @@ theme:
 
 nav:
   - Home: index.md
-  - Methods: methods.md
-  - Datasets: datasets.md
-  - Evaluation protocol: eval-protocol.md
-  - Results:
-      - Full matrix 3×3: results/full_matrix.md
+  - Getting started:
+      - Quickstart: getting-started/quickstart.md
+      - Installation: getting-started/installation.md
+      - Tutorial (MovieLens): getting-started/tutorial.md
+  - How-to:
+      - how-to/index.md
+      - Plug in a donor: how-to/add-donor.md
+      - Add your own method: how-to/add-method.md
+      - Run the benchmark: how-to/run-benchmark.md
+      - Choose a method: how-to/choose-method.md
+  - Concepts:
+      - explanation/index.md
+      - Why warm-transfer: explanation/why.md
+      - Popularity bias & Grouped MP: explanation/popularity-bias.md
+      - Method families: explanation/methods-families.md
+      - Evaluation protocol: eval-protocol.md
+      - Glossary: explanation/glossary.md
+  - Reference:
+      - Methods (capability matrix): methods.md
+      - Contracts & types: reference/contracts.md
+      - Datasets: datasets.md
+      - API: api.md
+  - Benchmark:
+      - Main results (8×5): results/full_matrix.md
       - Seed variance: results/seeds.md
-      - Deep / [EMB]: results/deep.md
-      - KION text vs categories: results/kion_text.md
-  - API Reference: api.md
 
 plugins:
   - search
@@ -58,13 +74,29 @@ plugins:
           build: true
           nav_translations:
             Home: Главная
-            Methods: Методы
-            Datasets: Датасеты
+            Getting started: Начало работы
+            Quickstart: Быстрый старт
+            Installation: Установка
+            Tutorial (MovieLens): Туториал (MovieLens)
+            How-to: How-to
+            Plug in a donor: Как подключить донора
+            Add your own method: Как добавить свой метод
+            Run the benchmark: Как запустить бенчмарк
+            Choose a method: Как выбрать метод
+            Concepts: Концепции
+            Why warm-transfer: Зачем warm-transfer
+            Popularity bias & Grouped MP: Популярность и Grouped MP
+            Method families: Семейства методов
             Evaluation protocol: Протокол оценки
-            Results: Результаты
-            Full matrix 3×3: Полная матрица 3×3
+            Glossary: Глоссарий
+            Reference: Справочник
+            Methods (capability matrix): Методы (матрица возможностей)
+            Contracts & types: Контракты и типы
+            Datasets: Датасеты
+            API: API
+            Benchmark: Бенчмарк
+            Main results (8×5): Главные результаты (8×5)
             Seed variance: Разброс по сидам
-            KION text vs categories: KION текст vs категории
   - mkdocstrings:
       handlers:
         python:
@@ -77,6 +109,8 @@ plugins:
 
 markdown_extensions:
   - admonition
+  - attr_list
+  - md_in_html
   - pymdownx.superfences
   - pymdownx.highlight
   - tables
