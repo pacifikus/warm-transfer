@@ -69,6 +69,30 @@ reco = LinMap(alpha=1.0).fit(inputs, seed=42).predict(
 
 Full runnable example: `examples/quickstart.py`.
 
+## Quick verdict: which method fits my data?
+
+Bring your interactions, item content and your model's scores — `recommend` evaluates every
+feasible method on an honest pseudo-cold holdout and tells you the best one (and whether
+transfer is worth it at all):
+
+```python
+import warmtransfer as wt
+
+result = wt.recommend(interactions, content, donor_scores)
+print(result)              # leaderboard + verdict
+result.best_transfer       # best non-baseline method, e.g. "linmap"
+result.predict(users, new_item_ids)   # winner, refit on all warm data
+```
+
+Or from the terminal:
+
+```bash
+warmbench try --interactions inter.parquet --content content.parquet --scores scores.parquet
+```
+
+The estimate uses a holdout of your warm items; the donor is not retrained, so treat it as a
+mildly optimistic signal of whether transfer helps.
+
 ## Installation
 
 ```bash

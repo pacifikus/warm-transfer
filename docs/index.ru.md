@@ -69,6 +69,30 @@ reco = LinMap(alpha=1.0).fit(inputs, seed=42).predict(
 
 Полный исполняемый пример: `examples/quickstart.py`.
 
+## Быстрый вердикт: какой метод подойдёт моим данным?
+
+Принесите взаимодействия, контент айтемов и скоры своей модели — `recommend` прогонит все
+применимые методы на честном псевдо-cold holdout и подскажет лучший (и стоит ли вообще
+использовать трансфер):
+
+```python
+import warmtransfer as wt
+
+result = wt.recommend(interactions, content, donor_scores)
+print(result)              # лидерборд + вердикт
+result.best_transfer       # лучший не-бейзлайн метод, напр. "linmap"
+result.predict(users, new_item_ids)   # победитель, дофиченный на всех warm
+```
+
+Или из терминала:
+
+```bash
+warmbench try --interactions inter.parquet --content content.parquet --scores scores.parquet
+```
+
+Оценка делается на holdout из ваших тёплых айтемов; донор не переобучается — трактуйте как
+слегка оптимистичный сигнал того, помогает ли трансфер.
+
 ## Установка
 
 ```bash
