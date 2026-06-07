@@ -90,3 +90,19 @@ def test_predict_different_cold_sets() -> None:
     r2 = res.predict(np.array([0, 1]), np.array([2, 3]))
     assert set(r1[C.Item]) == {0}
     assert set(r2[C.Item]) == {2, 3}
+
+
+def test_public_export() -> None:
+    import warmtransfer as wt
+
+    assert hasattr(wt, "recommend")
+    assert hasattr(wt, "AutoResult")
+    assert hasattr(wt, "HoldoutConfig")
+
+
+def test_example_runs() -> None:
+    import runpy
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[2] / "examples" / "recommend_quickstart.py"
+    runpy.run_path(str(path), run_name="__main__")
