@@ -12,21 +12,25 @@ You do not need to retrain the model, nor do you need access to its internals.
 
 Model-agnostic methods **LinMap** (Ridge: content → donor score vector) and **stacking_plus**
 (hybrid: linmap signal + personalized popularity) **beat the strong personalized
-Grouped MP** on the full matrix of **3 domains × 3 donors**:
+Grouped MP** across a matrix of **8 dataset loaders × 5 donors** (seed=42):
 
-- by **AUC** — in 7 of 9 cells (with the ALS donor — in all three domains);
-- by **ranking** (NDCG@10, Recall@10) — on ML-1M and KION with all donors;
-- the gaps exceed the spread across 5 seeds.
+- by **per-user AUC** — score transfer beats the baseline in **36 of 40** dataset×donor cells (90%);
+- the 4 misses are mostly on ML-1M, where the baseline AUC (~0.72) is already strong;
+- the five donors span four model families (matrix factorization als/bpr, GBDT catboost, linear
+  item-item ease, neural two_tower) — a **diversity axis** for checking how transfer holds across
+  donor types, not competitors to rank.
 
 Naive methods (KNN averaging, attention, embedding-avg) lose to the baseline — they pull in
-neighbors' popularity. Details and tables are in the [Results](results/full_matrix.md) section.
+neighbors' popularity. **Caveat:** these numbers are a single seed; targeted multi-seed runs on the
+marginal cells are still pending. Details and tables are in the [Results](results/full_matrix.md)
+section.
 
 ## Architecture
 
 - **`warmtransfer`** — lightweight core (plug&play): transfer methods, metrics, similarity.
   Works with donor scores + content, installs without heavy recsys dependencies.
 - **`warmtransfer.bench`** — benchmark (extra `bench`): datasets, fair splitter, donors
-  (ALS/BPR/CatBoost), runner.
+  (ALS/BPR/CatBoost/EASE/Two-Tower), runner.
 
 ## Quick start (core)
 

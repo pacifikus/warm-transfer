@@ -58,8 +58,8 @@ val-cold fold is available. See the tables in `results/full_matrix.md`.
 
 ## [EMB] methods (donor embeddings) — IMPLEMENTED
 
-These methods use the donor's latent factors (ALS/BPR provide them; CatBoost does not — the method
-is skipped). Empirical result (3 domains × ALS):
+These methods use the donor's latent factors (ALS/BPR/Two-Tower provide them; CatBoost and EASE do
+not — the method is skipped). Empirical result (focused subset: 3 domains × ALS):
 
 | Method | Idea | Access | Result |
 |---|---|---|---|

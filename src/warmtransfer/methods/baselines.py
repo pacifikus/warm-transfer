@@ -10,6 +10,7 @@ from typing import cast
 
 import numpy as np
 import pandas as pd
+from scipy import sparse
 
 from warmtransfer._pdutils import map_codes, unique_sorted
 from warmtransfer.columns import Columns as C
@@ -142,9 +143,13 @@ class GroupedMostPopularPersonalized(ColdStartMethod):
         # train contains only warm items → every element is present in w_pos
         rows = map_codes(train[C.User], self._u_pos)
         cols = map_codes(train[C.Item], w_pos)
-        counts = np.zeros((len(users), warm_mat.shape[0]))
-        np.add.at(counts, (rows, cols), 1.0)
-        self._affinity = counts @ warm_mat  # [n_users, n_genres]
+        # sparse user×warm-item counts → user×genre affinity (avoids a dense [n_users,
+        # n_warm] matrix that OOMs on large datasets like MIND).
+        counts = sparse.coo_matrix(
+            (np.ones(len(rows)), (rows, cols)),
+            shape=(len(users), warm_mat.shape[0]),
+        ).tocsr()
+        self._affinity = np.asarray(counts @ warm_mat)  # [n_users, n_genres]
 
         self._cold_mat = np.asarray(cold.matrix, dtype=float)
         self._cold_pos = {it: r for r, it in enumerate(cold.item_ids)}

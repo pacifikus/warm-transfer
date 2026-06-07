@@ -9,7 +9,8 @@
 | 1 | **MTS KION** | фильмы/сериалы (RU) | 962K / 15.7K / 5.48M | жанры, страны, студии, описания (RU+EN) | implicit (watch %) | `github.com/irsafilo/KION_DATASET` (.zip CSV) |
 | 2 | **MovieLens-1M** | кино | 6K / 3.9K / 1M | жанры, год | explicit (ratings) | grouplens (.zip) — внешний бейзлайн GroupedMP AUC≈0.709 |
 | 3 | **Goodbooks-10k** | книги | 53K / 10K / 6M | авторы, жанры (tags), год | explicit | zygmuntz/goodbooks-10k |
-| 4 | **Amazon subset** (Toys/Electronics) | e-com | варьируется (урезаем) | категории, бренд, TF-IDF(title/desc) | explicit (ratings) | Amazon Reviews (McAuley) |
+| 4 | **Amazon Toys & Games** (5-core) | e-com | 19.4K / 11.9K / 168K | категории, бренд, TF-IDF(title/desc) | explicit (ratings) | SNAP 5-core (McAuley) |
+| 5 | **MIND** (MINDlarge) | новости (EN) | 750K / 19.2K / 3.93M | категория, подкатегория, TF-IDF(title/abstract) | implicit (клики) | HuggingFace `yjw1029/MIND` |
 | опц. | **Yambda-50M** | музыка (RU) | ~1M / млн / 50M | audio-эмбеддинги, artist/album | implicit + explicit | HuggingFace `yandex/yambda` |
 
 Покрываемые оси обобщаемости: домены (кино/книги/e-com/музыка), explicit/implicit feedback,
@@ -22,10 +23,15 @@
 - ✅ **Goodbooks-10k** (`goodbooks`) — реализован, второй домен (книги).
 - ✅ **MTS KION** (`kion`) — реализован, третий домен (RU, фильмы/сериалы, implicit).
 - ✅ **KION-text** (`kion-text`) — тот же KION, контент = TF-IDF текста (для абляции контента).
-- ⬜ Amazon, Yambda — в планах (загрузчики не написаны).
+- ✅ **Amazon Toys** (`amazon-toys`) — реализован, e-com (5-core), контент = топ-категории + бренд.
+- ✅ **Amazon Toys-text** (`amazon-toys-text`) — тот же Amazon, контент = TF-IDF title + desc.
+- ✅ **MIND** (`mind`) — реализован, новости (EN, implicit-клики), контент = категория + подкатегория.
+- ✅ **MIND-text** (`mind-text`) — тот же MIND, контент = TF-IDF title + abstract.
+- ⬜ Yambda — в планах (загрузчик не написан).
 
-Доноры: ✅ ALS (`als`), ✅ CatBoost (`catboost`), ✅ BPR (`bpr`). Бенчмарк прогнан на
-3 датасетах × 3 донора (см. `results/full_matrix.md`).
+Доноры: ✅ ALS (`als`), ✅ BPR (`bpr`), ✅ CatBoost (`catboost`), ✅ EASE (`ease`),
+✅ Two-Tower (`two_tower`). Бенчмарк прогнан на 8 загрузчиках датасетов × 5 доноров
+(см. `results/full_matrix.md`).
 
 ## Память (M1 16GB)
 
