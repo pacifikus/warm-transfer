@@ -1,4 +1,4 @@
-"""Загрузчики датасетов. Импорт подмодулей регистрирует их в реестре ``datasets``."""
+"""Dataset loaders. Importing the submodules registers them in the ``datasets`` registry."""
 
 from __future__ import annotations
 

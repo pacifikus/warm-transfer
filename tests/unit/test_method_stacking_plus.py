@@ -1,4 +1,4 @@
-"""Тест stacking_plus: гибрид linmap+affinity обучается на val-cold и персонализирует."""
+"""Test stacking_plus: linmap+affinity hybrid trains on val-cold and personalizes."""
 
 from __future__ import annotations
 

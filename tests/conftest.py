@@ -1,4 +1,4 @@
-"""Общие фикстуры тестов."""
+"""Common test fixtures."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from warmtransfer.types import Dataset, ItemFeatures
 
 @pytest.fixture
 def tiny_interactions() -> pd.DataFrame:
-    """Маленький набор взаимодействий (long-format)."""
+    """Small set of interactions (long-format)."""
     users = [1, 1, 1, 2, 2, 3, 3, 3, 4, 4]
     items = [10, 11, 12, 10, 13, 11, 12, 14, 10, 14]
     return pd.DataFrame({C.User: users, C.Item: items, C.Weight: 1.0, C.Datetime: 0})
@@ -20,7 +20,7 @@ def tiny_interactions() -> pd.DataFrame:
 
 @pytest.fixture
 def tiny_item_features() -> ItemFeatures:
-    """Контент для айтемов 10..14 (5 айтемов, 3 признака)."""
+    """Content for items 10..14 (5 items, 3 features)."""
     item_ids = np.array([10, 11, 12, 13, 14])
     rng = np.random.default_rng(0)
     matrix = rng.random((5, 3))

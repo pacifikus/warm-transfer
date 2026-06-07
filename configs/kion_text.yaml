@@ -1,5 +1,5 @@
-# Сравнение контента KION: категориальный (kion) vs TF-IDF текста (kion-text).
-# Цель — проверить, улучшает ли богатый текстовый контент перенос скоров на cold-айтемы.
+# KION content comparison: categorical (kion) vs TF-IDF text (kion-text).
+# Goal: check whether rich text content improves score transfer to cold items.
 
 datasets:
   - kion

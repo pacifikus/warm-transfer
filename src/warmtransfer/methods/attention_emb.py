@@ -1,9 +1,10 @@
-"""Attention-взвешенное усреднение эмбеддингов контентных соседей (SimCSR на уровне IT).
+"""Attention-weighted averaging of content neighbors' embeddings (SimCSR at the IT level).
 
-Расширение ``embedding_avg``: вместо равномерного среднего эмбеддингов k ближайших по
-контенту warm-соседей берём softmax-взвешенное по контентному сходству. Это «полный» SimCSR
-в пространстве латентных факторов донора: query = контент cold-айтема, key = контент соседа
-(через similarity), value = эмбеддинг соседа. Скор = user_emb · cold_emb. Нужны эмбеддинги ([EMB]).
+Extension of ``embedding_avg``: instead of a uniform mean over the embeddings of the k
+content-nearest warm neighbors, we take a softmax weighting by content similarity. This is the
+"full" SimCSR in the donor's latent-factor space: query = content of the cold item, key = content
+of the neighbor (via similarity), value = neighbor's embedding. Score = user_emb · cold_emb.
+Requires embeddings ([EMB]).
 """
 
 from __future__ import annotations
@@ -17,10 +18,10 @@ from warmtransfer.types import TransferInputs
 
 @register_method("attention_emb")
 class AttentionEmbedding(ColdStartMethod):
-    """Softmax-взвешенное по контенту усреднение эмбеддингов соседей донора.
+    """Content-based softmax-weighted averaging of donor neighbors' embeddings.
 
-    :param k: число ближайших warm-соседей.
-    :param temperature: температура softmax (меньше → острее веса).
+    :param k: number of nearest warm neighbors.
+    :param temperature: softmax temperature (lower → sharper weights).
     """
 
     requires = frozenset({"embeddings", "similarity", "content"})
@@ -32,15 +33,15 @@ class AttentionEmbedding(ColdStartMethod):
 
     def _fit(self, inputs: TransferInputs, seed: int) -> None:
         if inputs.warm_features is None or inputs.cold_features is None:
-            raise ValueError("attention_emb требует warm_features и cold_features")
+            raise ValueError("attention_emb requires warm_features and cold_features")
         if inputs.similarity is None:
-            raise ValueError("attention_emb требует similarity [n_cold, n_warm]")
+            raise ValueError("attention_emb requires similarity [n_cold, n_warm]")
         if inputs.embeddings is None:
-            raise ValueError("attention_emb требует embeddings")
+            raise ValueError("attention_emb requires embeddings")
         emb = inputs.embeddings
         for key in ("item", "item_ids", "user", "user_ids"):
             if key not in emb:
-                raise ValueError(f"embeddings: отсутствует ключ {key!r}")
+                raise ValueError(f"embeddings: missing key {key!r}")
 
         item_emb = np.asarray(emb["item"], dtype=float)
         item_emb_ids = np.asarray(emb["item_ids"])

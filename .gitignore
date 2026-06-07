@@ -12,7 +12,7 @@ build/
 # uv / venv
 .venv/
 
-# данные и артефакты бенчмарка
+# benchmark data and artifacts
 data/
 benchmarks_out/
 docs/results/*.parquet
@@ -20,7 +20,7 @@ docs/results/*.csv
 docs/results/results.md
 *.zip
 
-# кэш датасетов/скоров
+# dataset/score cache
 .warmtransfer/
 
 # IDE / OS
@@ -28,7 +28,7 @@ docs/results/results.md
 .idea/
 .vscode/
 
-# большие бинарники (статьи, материалы)
+# large binaries (papers, materials)
 *.pdf
 
 # CatBoost training artifacts

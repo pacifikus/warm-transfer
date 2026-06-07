@@ -1,4 +1,4 @@
-"""Тест DropoutNet: обучается на warm-эмбеддингах, предсказывает cold через контент."""
+"""DropoutNet test: trains on warm embeddings, predicts cold via content."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import pytest
 from warmtransfer.columns import Columns as C
 from warmtransfer.types import ItemFeatures, TransferInputs
 
-pytestmark = pytest.mark.bench  # требует torch (extra deep)
+pytestmark = pytest.mark.bench  # requires torch (extra deep)
 
 
 def _feats(ids: list[int], genres: list[int]) -> ItemFeatures:
@@ -21,7 +21,7 @@ def _feats(ids: list[int], genres: list[int]) -> ItemFeatures:
 
 def _inputs() -> TransferInputs:
     warm = _feats([10, 11, 12, 13], [0, 0, 1, 1])
-    # латент донора: g0-айтемы похожи на user1, g1-айтемы — на user2
+    # donor latent: g0 items are similar to user1, g1 items — to user2
     item_emb = np.array(
         [[1.0, 0.0], [1.0, 0.0], [0.0, 1.0], [0.0, 1.0]], dtype=float
     )
@@ -52,7 +52,7 @@ def test_dropoutnet_learns_content_to_latent() -> None:
     assert set(C.Scores) <= set(reco.columns)
     assert len(reco) == 4
     pivot = reco.pivot(index=C.User, columns=C.Item, values=C.Score)
-    # user1 (латент g0) выше скорит cold g0 (30); user2 (g1) — cold g1 (31)
+    # user1 (latent g0) scores cold g0 (30) higher; user2 (g1) — cold g1 (31)
     assert pivot.loc[1, 30] > pivot.loc[1, 31]
     assert pivot.loc[2, 31] > pivot.loc[2, 30]
 

@@ -1,7 +1,7 @@
-"""Интерфейс загрузчика датасета (DatasetLoader) + реестр.
+"""Dataset loader interface (DatasetLoader) + registry.
 
-Добавление нового датасета = один класс с ``load()`` + декоратор (требование куратора:
-лёгкая расширяемость бенчмарка).
+Adding a new dataset = one class with ``load()`` + a decorator (curator requirement:
+easy extensibility of the benchmark).
 """
 
 from __future__ import annotations
@@ -15,24 +15,24 @@ from warmtransfer.types import Dataset
 
 
 class DatasetLoader(ABC):
-    """Абстрактный загрузчик.
+    """Abstract loader.
 
-    :meth:`load` приводит сырые данные к единому формату: ``Dataset`` со взаимодействиями
-    (long-format, колонки ``Columns``) и контентом айтемов (``ItemFeatures``).
+    :meth:`load` converts raw data into a unified format: a ``Dataset`` with interactions
+    (long-format, ``Columns`` columns) and item content (``ItemFeatures``).
     """
 
     name: str = "base"
 
     @abstractmethod
     def load(self) -> Dataset:
-        """Загрузить (при необходимости скачать) и нормализовать датасет."""
+        """Load (downloading if necessary) and normalize the dataset."""
 
     def describe(self) -> dict:
-        """Краткое описание для docs/datasets.md (домен, размер, фичи)."""
+        """Brief description for docs/datasets.md (domain, size, features)."""
         return {"name": self.name}
 
 
-#: Реестр датасетов.
+#: Dataset registry.
 datasets: Registry[type[DatasetLoader]] = Registry("dataset")
 
 

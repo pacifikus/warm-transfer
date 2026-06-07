@@ -1,4 +1,4 @@
-"""Тесты метода debiased_knn: контракт, схема вывода и эффект дебиасинга популярности."""
+"""Tests for the debiased_knn method: contract, output schema, popularity debiasing."""
 
 from __future__ import annotations
 
@@ -11,24 +11,24 @@ from warmtransfer.types import ItemFeatures, TransferInputs
 
 
 def _inputs() -> TransferInputs:
-    """Синтетика: cold-айтем 20 имеет двух соседей — популярного (10) и нишевого (11).
+    """Synthetic data: cold item 20 has two neighbors — popular (10) and niche (11).
 
-    Сосед 10 глобально популярен: высокий средний по пользователям скор донора.
-    Сосед 11 нишевый: средний скор низкий, но для user 1 он выделяется.
+    Neighbor 10 is globally popular: a high donor score averaged over users.
+    Neighbor 11 is niche: low average score, but it stands out for user 1.
     """
     warm = ItemFeatures(
         np.array([10, 11]),
         np.array([[1.0, 0.0], [0.0, 1.0]]),
         ["f0", "f1"],
     )
-    # cold-айтем 20 одинаково близок к обоим соседям → веса по 0.5
+    # cold item 20 is equally close to both neighbors → weights of 0.5 each
     cold = ItemFeatures(np.array([20]), np.array([[0.5, 0.5]]), ["f0", "f1"])
     similarity = np.array([[1.0, 1.0]])  # [n_cold=1, n_warm=2]
 
     train = pd.DataFrame(
         {C.User: [1, 2, 3], C.Item: [10, 10, 10], C.Weight: 1.0, C.Datetime: 0}
     )
-    # сосед 10 — высокий скор у всех (популярный); сосед 11 — высокий только у user 1
+    # neighbor 10 — high score for everyone (popular); neighbor 11 — high only for user 1
     donor = pd.DataFrame(
         {
             C.User: [1, 1, 2, 2, 3, 3],
@@ -62,7 +62,7 @@ def test_deterministic() -> None:
 
 
 def test_popular_neighbor_contribution_reduced() -> None:
-    """Дебиасинг снижает вклад глобально популярного соседа относительно наивного KNN."""
+    """Debiasing reduces the globally popular neighbor's contribution vs. naive KNN."""
     inp = _inputs()
     from warmtransfer.methods.knn import KNNScoreAggregation
 
@@ -75,13 +75,14 @@ def test_popular_neighbor_contribution_reduced() -> None:
     naive_s = naive.set_index(C.User)[C.Score]
     deb_s = deb.set_index(C.User)[C.Score]
 
-    # Популярный сосед 10 (colmean=0.9) в дебиасе вычитается → его вклад зануляется.
-    # Нишевый сосед 11 (colmean=0.3) сохраняет персональную часть.
-    # Для всех пользователей дебиасированный скор ниже наивного (популярность вырезана).
+    # Popular neighbor 10 (colmean=0.9) is subtracted in debiasing → its contribution
+    # zeroes out.
+    # Niche neighbor 11 (colmean=0.3) keeps its personal part.
+    # For every user the debiased score is below the naive one (popularity stripped out).
     for u in users:
         assert deb_s.loc[u] < naive_s.loc[u]
 
-    # Персонализация усиливается: у user 1 (любит нишевый 11) дебиасированный скор
-    # становится выше, чем у user 2/3, для которых 11 неинтересен.
+    # Personalization is amplified: for user 1 (who likes the niche item 11) the debiased
+    # score becomes higher than for users 2/3, for whom 11 is irrelevant.
     assert deb_s.loc[1] > deb_s.loc[2]
     assert deb_s.loc[1] > deb_s.loc[3]

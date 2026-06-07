@@ -1,4 +1,4 @@
-"""Адаптеры моделей-доноров. Импорт подмодулей регистрирует их в реестре ``adapters``."""
+"""Donor model adapters. Importing submodules registers them in the ``adapters`` registry."""
 
 from __future__ import annotations
 

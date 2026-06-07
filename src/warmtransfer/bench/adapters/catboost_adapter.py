@@ -1,10 +1,10 @@
-"""Донор на признаках: CatBoostClassifier поверх implicit-feedback.
+"""Feature-based donor: CatBoostClassifier on top of implicit feedback.
 
-Обучается на warm-взаимодействиях как на задаче бинарной классификации: позитивы —
-наблюдённые пары (user, item) с меткой 1, негативы — случайно сэмплированные пары
-(user, случайный item) с меткой 0. ``user_id`` и ``item_id`` подаются как
-КАТЕГОРИАЛЬНЫЕ признаки. На ``score`` выдаётся ``predict_proba[:, 1]`` по
-кросс-произведению известных (warm) пользователей и айтемов.
+Trained on warm interactions as a binary classification task: positives are the
+observed (user, item) pairs with label 1, negatives are randomly sampled
+(user, random item) pairs with label 0. ``user_id`` and ``item_id`` are fed as
+CATEGORICAL features. ``score`` returns ``predict_proba[:, 1]`` over the
+cross-product of known (warm) users and items.
 """
 
 from __future__ import annotations
@@ -22,11 +22,11 @@ from warmtransfer.types import Dataset
 
 @register_adapter("catboost")
 class CatBoostAdapter(ModelAdapter):
-    """CatBoostClassifier как донор на категориальных id.
+    """CatBoostClassifier as a donor over categorical ids.
 
-    :param iterations: число деревьев CatBoost.
-    :param depth: глубина деревьев.
-    :param neg_ratio: сколько негативов сэмплировать на один позитив.
+    :param iterations: number of CatBoost trees.
+    :param depth: tree depth.
+    :param neg_ratio: how many negatives to sample per positive.
     """
 
     def __init__(
@@ -58,7 +58,7 @@ class CatBoostAdapter(ModelAdapter):
         n_pos = len(pos_users)
         pos_pairs = set(zip(pos_users.tolist(), pos_items.tolist(), strict=True))
 
-        # Негативный сэмплинг: тот же пользователь, случайный айтем (исключая позитивы).
+        # Negative sampling: same user, random item (excluding positives).
         n_neg = n_pos * self.neg_ratio
         neg_users = pos_users[rng.integers(0, n_pos, size=n_neg)]
         neg_items = self._item_ids[rng.integers(0, len(self._item_ids), size=n_neg)]
@@ -73,7 +73,7 @@ class CatBoostAdapter(ModelAdapter):
             [np.ones(n_pos, dtype=int), np.zeros(len(neg_users), dtype=int)]
         )
 
-        # CatBoost требует категориальные признаки строками.
+        # CatBoost requires categorical features as strings.
         x = pd.DataFrame(
             {
                 C.User: users.astype(str),
@@ -92,9 +92,9 @@ class CatBoostAdapter(ModelAdapter):
         return self
 
     def score(self, user_ids: np.ndarray, item_ids: np.ndarray) -> pd.DataFrame:
-        """Скоры для кросс-произведения user_ids × item_ids (только известные warm)."""
+        """Scores for the cross-product user_ids x item_ids (known warm only)."""
         if self._user_ids is None or self._item_ids is None:
-            raise RuntimeError("CatBoostAdapter: вызовите fit() до score()")
+            raise RuntimeError("CatBoostAdapter: call fit() before score()")
 
         u_known = [u for u in user_ids if u in self._u_set]
         i_known = [it for it in item_ids if it in self._i_set]

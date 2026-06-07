@@ -1,4 +1,4 @@
-"""Тесты технических метрик раннера: latency и RSS."""
+"""Tests for the runner's technical metrics: latency and RSS."""
 
 from __future__ import annotations
 

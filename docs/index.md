@@ -1,34 +1,34 @@
 # warm-transfer
 
-**Model-agnostic plug&play библиотека** для переноса и калибровки скоров уже обученной
-рекомендательной модели на **новые (cold-start) айтемы** при экстремальной разреженности,
-плюс воспроизводимый **бенчмарк**.
+**Model-agnostic plug&play library** for transferring and calibrating the scores of an already
+trained recommender model to **new (cold-start) items** under extreme sparsity, plus a
+reproducible **benchmark**.
 
-Идея: у вас есть обученная модель произвольной архитектуры — библиотека «накладывается»
-поверх её скоров и оценивает новые товары/контент, для которых ещё нет (или почти нет)
-взаимодействий. Модель переобучать не нужно, доступа к её внутренностям тоже.
+The idea: you have a trained model of arbitrary architecture — the library "wraps" around its
+scores and rates new products/content for which there are no (or almost no) interactions yet.
+You do not need to retrain the model, nor do you need access to its internals.
 
-## Главный результат
+## Main result
 
-Model-agnostic методы **LinMap** (Ridge: контент → вектор скоров донора) и **stacking_plus**
-(гибрид: linmap-сигнал + персонализированная популярность) **обходят сильный персонализированный
-Grouped MP** на полной матрице **3 домена × 3 донора**:
+Model-agnostic methods **LinMap** (Ridge: content → donor score vector) and **stacking_plus**
+(hybrid: linmap signal + personalized popularity) **beat the strong personalized
+Grouped MP** on the full matrix of **3 domains × 3 donors**:
 
-- по **AUC** — в 7 из 9 ячеек (с донором ALS — во всех трёх доменах);
-- по **ранжированию** (NDCG@10, Recall@10) — на ML-1M и KION со всеми донорами;
-- разрывы превышают разброс по 5 сидам.
+- by **AUC** — in 7 of 9 cells (with the ALS donor — in all three domains);
+- by **ranking** (NDCG@10, Recall@10) — on ML-1M and KION with all donors;
+- the gaps exceed the spread across 5 seeds.
 
-Наивные методы (KNN-усреднение, attention, embedding-avg) проигрывают бейзлайну — тянут
-популярность соседей. Подробности и таблицы — в разделе [Результаты](results/full_matrix.md).
+Naive methods (KNN averaging, attention, embedding-avg) lose to the baseline — they pull in
+neighbors' popularity. Details and tables are in the [Results](results/full_matrix.md) section.
 
-## Архитектура
+## Architecture
 
-- **`warmtransfer`** — лёгкое ядро (plug&play): методы переноса, метрики, similarity.
-  Работает со скорами донора + контентом, ставится без тяжёлых recsys-зависимостей.
-- **`warmtransfer.bench`** — бенчмарк (extra `bench`): датасеты, честный сплиттер, доноры
+- **`warmtransfer`** — lightweight core (plug&play): transfer methods, metrics, similarity.
+  Works with donor scores + content, installs without heavy recsys dependencies.
+- **`warmtransfer.bench`** — benchmark (extra `bench`): datasets, fair splitter, donors
   (ALS/BPR/CatBoost), runner.
 
-## Быстрый старт (ядро)
+## Quick start (core)
 
 ```python
 import numpy as np
@@ -67,17 +67,17 @@ reco = LinMap(alpha=1.0).fit(inputs, seed=42).predict(
 )
 ```
 
-Полный исполняемый пример: `examples/quickstart.py`.
+Full runnable example: `examples/quickstart.py`.
 
-## Установка
+## Installation
 
 ```bash
-uv sync                 # только ядро + dev
-uv sync --extra bench   # + движки доноров и бенчмарк
+uv sync                 # core + dev only
+uv sync --extra bench   # + donor engines and benchmark
 uv sync --extra all     # + deep (torch)
 ```
 
-## Проверка бенчмарка
+## Benchmark check
 
 ```bash
 uv run python examples/quickstart.py
@@ -86,5 +86,5 @@ uv run warmbench --config configs/example.yaml --dry-run
 uv run warmbench --config configs/example.yaml
 ```
 
-См. [Методы](methods.md), [Датасеты](datasets.md), [Протокол оценки](eval-protocol.md),
+See [Methods](methods.md), [Datasets](datasets.md), [Evaluation protocol](eval-protocol.md),
 [API](api.md).

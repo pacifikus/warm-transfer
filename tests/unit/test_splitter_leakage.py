@@ -1,6 +1,6 @@
-"""Тесты честного pseudo-cold сплита — главный анти-утечка контракт.
+"""Tests for the honest pseudo-cold split — the main anti-leakage contract.
 
-Если эти тесты падают — eval-протокол скомпрометирован, всем цифрам нельзя верить.
+If these tests fail, the eval protocol is compromised and none of the numbers can be trusted.
 """
 
 from __future__ import annotations
@@ -16,11 +16,11 @@ from warmtransfer.types import Dataset
 
 @pytest.fixture
 def medium_dataset() -> Dataset:
-    """200 пользователей × 80 айтемов, популярность распределена неравномерно."""
+    """200 users x 80 items, with an unevenly distributed popularity."""
     rng = np.random.default_rng(0)
     users, items = [], []
     for item in range(80):
-        # популярность айтема убывает с индексом
+        # item popularity decreases with the index
         n = max(2, int(60 * np.exp(-item / 20)))
         chosen = rng.choice(200, size=min(n, 200), replace=False)
         users.extend(chosen.tolist())
@@ -41,14 +41,14 @@ def test_val_items_not_in_train(medium_dataset: Dataset) -> None:
     train_items = set(res.train[C.Item].unique())
     val_items = set(res.val[C.Item].unique())
     assert val_items.isdisjoint(train_items)
-    # val и test тоже не пересекаются по айтемам
+    # val and test also do not overlap by items
     assert val_items.isdisjoint(set(res.cold_items))
 
 
 def test_cold_interactions_only_in_test(medium_dataset: Dataset) -> None:
     res = PseudoColdSplitter(cold_frac=0.2, val_frac=0.1).split(medium_dataset, seed=1)
     cold = set(res.cold_items)
-    # все взаимодействия cold-айтемов присутствуют в test и нигде больше
+    # all interactions of cold items are present in test and nowhere else
     assert set(res.test[C.Item].unique()) == cold
     assert cold.isdisjoint(set(res.train[C.Item].unique()))
     assert cold.isdisjoint(set(res.val[C.Item].unique()))
@@ -75,7 +75,7 @@ def test_cold_fraction_approximately(medium_dataset: Dataset) -> None:
     res = PseudoColdSplitter(cold_frac=0.25, val_frac=0.0).split(medium_dataset, seed=3)
     n_items = medium_dataset.interactions[C.Item].nunique()
     frac = len(res.cold_items) / n_items
-    assert 0.15 <= frac <= 0.35  # стратификация по бакетам даёт небольшой разброс
+    assert 0.15 <= frac <= 0.35  # bucket stratification introduces a small spread
 
 
 def test_cold_items_have_ground_truth(medium_dataset: Dataset) -> None:
@@ -85,8 +85,8 @@ def test_cold_items_have_ground_truth(medium_dataset: Dataset) -> None:
 
 
 def test_small_dataset_still_gets_cold() -> None:
-    # на малом датасете независимое округление по бакетам дало бы 0 cold;
-    # глобальный target гарантирует ≥1
+    # on a small dataset, independent per-bucket rounding would yield 0 cold;
+    # the global target guarantees >=1
     rng = np.random.default_rng(0)
     users, items = [], []
     for item in range(6):
@@ -101,7 +101,7 @@ def test_small_dataset_still_gets_cold() -> None:
 
 
 def test_cold_fraction_global_target() -> None:
-    # суммарная доля cold соответствует глобальному round(total*frac)
+    # the total cold fraction matches the global round(total*frac)
     rng = np.random.default_rng(0)
     users, items = [], []
     for item in range(50):

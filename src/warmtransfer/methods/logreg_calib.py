@@ -1,9 +1,9 @@
-"""LogReg-калибровка скоров донора по контентным соседям.
+"""LogReg calibration of donor scores via content neighbors.
 
-Для cold-айтема берём k ближайших по контенту warm-соседей и считаем по их скорам донора
-несколько агрегатов (взвешенный, средний, максимум). Логистическая регрессия, обученная на
-val-cold фолде, калибрует эти агрегаты в вероятность взаимодействия. В отличие от наивного
-KNN, веса агрегатов подбираются под данные.
+For a cold item we take the k nearest warm neighbors by content and compute several
+aggregates over their donor scores (weighted, mean, max). A logistic regression trained on
+the val-cold fold calibrates these aggregates into an interaction probability. Unlike naive
+KNN, the aggregate weights are fitted to the data.
 """
 
 from __future__ import annotations
@@ -19,9 +19,9 @@ from warmtransfer.types import ItemFeatures, TransferInputs
 
 @register_method("logreg_calib")
 class LogRegCalibration(ColdStartMethod):
-    """Логистическая калибровка knn-агрегатов скоров донора (обучение на val-cold).
+    """Logistic calibration of knn aggregates of donor scores (trained on val-cold).
 
-    :param k: число контентных соседей.
+    :param k: number of content neighbors.
     """
 
     requires = frozenset({"donor_scores", "similarity", "content", "val"})
@@ -38,9 +38,9 @@ class LogRegCalibration(ColdStartMethod):
         cold = _req(inputs.cold_features, "cold_features")
         val_cold = _req(inputs.val_cold_features, "val_cold_features")
         if inputs.similarity is None or inputs.val_similarity is None:
-            raise ValueError("logreg_calib требует similarity и val_similarity")
+            raise ValueError("logreg_calib requires similarity and val_similarity")
         if inputs.val_interactions is None:
-            raise ValueError("logreg_calib требует val_interactions")
+            raise ValueError("logreg_calib requires val_interactions")
 
         self._users = unique_sorted(inputs.donor_scores[C.User])
         self._u_pos = {u: i for i, u in enumerate(self._users)}
@@ -70,7 +70,7 @@ class LogRegCalibration(ColdStartMethod):
         return cross_join_frame(user_ids, cold_item_ids, scores)
 
     def _features(self, sim: np.ndarray, users: np.ndarray) -> np.ndarray:
-        """Агрегаты скоров донора по top-k соседям: [взвешенный, средний, максимум]."""
+        """Donor score aggregates over top-k neighbors: [weighted, mean, max]."""
         u_rows = np.array([self._u_pos.get(u, -1) for u in users])
         known = u_rows >= 0
         donor = np.zeros((len(users), self._donor.shape[1]))
@@ -99,7 +99,7 @@ class LogRegCalibration(ColdStartMethod):
 
 def _req(feats: ItemFeatures | None, what: str) -> ItemFeatures:
     if feats is None:
-        raise ValueError(f"logreg_calib требует {what}")
+        raise ValueError(f"logreg_calib requires {what}")
     return feats
 
 

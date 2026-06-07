@@ -1,7 +1,7 @@
 [project]
 name = "warm-transfer"
 version = "0.1.0"
-description = "Model-agnostic plug&play библиотека для трансфера и калибровки скоров рекомендательной модели на cold-start айтемы"
+description = "Model-agnostic plug & play library for transferring and calibrating a trained recommender's scores onto cold-start items, plus a reproducible benchmark"
 readme = "README.md"
 authors = [
     { name = "Nikita Tenishev", email = "nik.tenishev@gmail.com" }
@@ -18,31 +18,31 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    # === lightweight core: только то, что нужно для применения методов и метрик ===
+    # === lightweight core: only what is needed to apply methods and metrics ===
     "numpy>=1.26",
     "pandas>=2.1",
     "scipy>=1.11",
-    "scikit-learn>=1.4",   # Ridge / LogReg / cosine — лёгкие, без тяжёлых трансформеров
-    "pydantic>=2.6",       # валидация на границах: конфиги, схемы публичного API
+    "scikit-learn>=1.4",   # Ridge / LogReg / cosine — lightweight, no heavy transformers
+    "pydantic>=2.6",       # validation at the boundaries: configs, public API schemas
 ]
 
 [project.optional-dependencies]
 deep = [
-    "torch>=2.2",          # DeepLinMap, Two-Tower, полный SimCSR (MPS на M1 / CUDA на RTX)
+    "torch>=2.2",          # DeepLinMap, Two-Tower, full SimCSR (MPS on M1 / CUDA on RTX)
 ]
 bench = [
-    # === тяжёлые движки доноров и инфраструктура бенчмарка ===
-    "implicit>=0.7",       # ALS + BPR (семья матричной факторизации)
-    "catboost>=1.2",       # бустинг на признаках
-    "rectools>=0.13",      # обёртки моделей + сверка конвенций
-    # NB: lightfm намеренно не подключён — его sdist не собирается с новым setuptools,
-    #     колёс под py3.11/arm нет. BPR берём из implicit (та же MF/BPR-семья).
-    "pyarrow>=15",         # parquet-артефакты и кэш скоров
+    # === heavy donor engines and benchmark infrastructure ===
+    "implicit>=0.7",       # ALS + BPR (matrix-factorization family)
+    "catboost>=1.2",       # gradient boosting on features
+    "rectools>=0.13",      # model wrappers + convention cross-checks
+    # NB: lightfm is intentionally not included — its sdist does not build with recent
+    #     setuptools and there are no py3.11/arm wheels. BPR comes from implicit (same MF/BPR family).
+    "pyarrow>=15",         # parquet artifacts and score cache
     "pyyaml>=6.0",
-    "tabulate>=0.9",       # markdown-таблицы результатов
+    "tabulate>=0.9",       # markdown result tables
     "tqdm>=4.66",
-    "psutil>=5.9",         # замер latency / RSS
-    "requests>=2.31",      # скачивание датасетов
+    "psutil>=5.9",         # latency / RSS measurement
+    "requests>=2.31",      # dataset downloads
 ]
 all = ["warm-transfer[deep,bench]"]
 
@@ -51,12 +51,13 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
     "ruff>=0.6",
-    "hypothesis>=6.0",     # property-based тесты для метрик и сплиттера
-    "pyright>=1.1.390",    # проверка типов из CLI
+    "hypothesis>=6.0",     # property-based tests for metrics and the splitter
+    "pyright>=1.1.390",    # type checking from the CLI
 ]
 docs = [
-    "mkdocs-material>=9.5",          # тема сайта документации (как у современных либ)
-    "mkdocstrings[python]>=0.26",    # авто-API из docstring'ов
+    "mkdocs-material>=9.5",          # documentation site theme
+    "mkdocstrings[python]>=0.26",    # auto API from docstrings
+    "mkdocs-static-i18n>=1.2",       # bilingual pages (en/ru)
 ]
 
 [build-system]
@@ -81,12 +82,12 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
-ignore = ["RUF001", "RUF002", "RUF003"]  # кириллица в комментариях/строках — это ОК
+ignore = ["RUF001", "RUF002", "RUF003"]  # allow ambiguous unicode (e.g. × in docstrings)
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = [
-    "bench: тесты, требующие тяжёлых зависимостей (extra 'bench'); пропускаются без них",
+    "bench: tests that require heavy dependencies (extra 'bench'); skipped without them",
 ]
 addopts = "-q --strict-markers"
 

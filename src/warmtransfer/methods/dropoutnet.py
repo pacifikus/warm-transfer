@@ -1,13 +1,14 @@
-"""DropoutNet (Volkovs et al., NeurIPS 2017) — post-hoc cold-start через dropout преференций.
+"""DropoutNet (Volkovs et al., NeurIPS 2017) — post-hoc cold-start via preference dropout.
 
-Идея: обучаем MLP, который по входу [item-латент донора, контент айтема] восстанавливает
-item-латент. Во время обучения латентную (preference) ветку случайно зануляем (dropout) — это
-имитирует cold-start и заставляет сеть выучить отображение «контент → латент». На инференсе у
-cold-айтема латента нет (=0), поэтому скор считается полностью по контенту:
+Idea: we train an MLP that, given the input [donor item latent, item content], reconstructs
+the item latent. During training, the latent (preference) branch is randomly zeroed out
+(dropout) — this mimics cold-start and forces the network to learn the mapping
+"content -> latent". At inference, a cold item has no latent (=0), so the score is computed
+entirely from content:
 ``score(u, i) = user_emb[u] · MLP([0, content_i])``.
 
-В отличие от линейного LinMap (контент → вектор скоров), DropoutNet предсказывает item-латент
-в пространстве донора и нелинеен. Требует доступа к эмбеддингам донора ([EMB]).
+Unlike the linear LinMap (content -> score vector), DropoutNet predicts the item latent in
+the donor space and is non-linear. It requires access to the donor embeddings ([EMB]).
 """
 
 from __future__ import annotations
@@ -21,13 +22,13 @@ from warmtransfer.types import TransferInputs
 
 @register_method("dropoutnet")
 class DropoutNet(ColdStartMethod):
-    """MLP [латент⊕контент]→латент с dropout преференций (восстановление item-эмбеддинга).
+    """MLP [latent⊕content]->latent with preference dropout (item embedding reconstruction).
 
-    :param hidden: размер скрытого слоя.
-    :param epochs: число эпох обучения.
+    :param hidden: hidden layer size.
+    :param epochs: number of training epochs.
     :param lr: learning rate (Adam).
-    :param dropout_pref: доля примеров в батче с занулённой латентной веткой.
-    :param weight_decay: L2-регуляризация.
+    :param dropout_pref: fraction of examples in the batch with a zeroed latent branch.
+    :param weight_decay: L2 regularization.
     """
 
     requires = frozenset({"embeddings", "content"})
@@ -52,13 +53,13 @@ class DropoutNet(ColdStartMethod):
         from torch import nn
 
         if inputs.warm_features is None or inputs.cold_features is None:
-            raise ValueError("dropoutnet требует warm_features и cold_features")
+            raise ValueError("dropoutnet requires warm_features and cold_features")
         if inputs.embeddings is None:
-            raise ValueError("dropoutnet требует embeddings")
+            raise ValueError("dropoutnet requires embeddings")
         emb = inputs.embeddings
         for key in ("item", "item_ids", "user", "user_ids"):
             if key not in emb:
-                raise ValueError(f"embeddings: отсутствует ключ {key!r}")
+                raise ValueError(f"embeddings: missing key {key!r}")
 
         torch.manual_seed(seed)
 
@@ -68,17 +69,17 @@ class DropoutNet(ColdStartMethod):
         user_ids = np.asarray(emb["user_ids"])
         self._user_pos = {u: i for i, u in enumerate(user_ids)}
 
-        # warm-айтемы, у которых есть И эмбеддинг донора, И контент
+        # warm items that have BOTH a donor embedding AND content
         warm = inputs.warm_features
         warm_mat = np.asarray(_dense(warm.matrix), dtype=np.float32)  # [n_warm, c]
         emb_pos = {it: j for j, it in enumerate(item_emb_ids)}
         warm_rows = [r for r, it in enumerate(warm.item_ids) if it in emb_pos]
         if not warm_rows:
-            raise ValueError("dropoutnet: нет warm-айтемов с эмбеддингом донора")
+            raise ValueError("dropoutnet: no warm items with a donor embedding")
         emb_rows = [emb_pos[warm.item_ids[r]] for r in warm_rows]
 
-        x = torch.from_numpy(warm_mat[warm_rows])  # [n, c] контент
-        v = torch.from_numpy(item_emb[emb_rows])  # [n, d] латент-таргет
+        x = torch.from_numpy(warm_mat[warm_rows])  # [n, c] content
+        v = torch.from_numpy(item_emb[emb_rows])  # [n, d] latent target
 
         d = v.shape[1]
         c = x.shape[1]
@@ -96,7 +97,7 @@ class DropoutNet(ColdStartMethod):
 
         self._net.train()
         for _ in range(self.epochs):
-            # dropout преференций: часть строк получает нулевую латентную ветку
+            # preference dropout: some rows get a zeroed latent branch
             mask = (torch.rand(v.shape[0], 1, generator=gen) >= self.dropout_pref).float()
             inp = torch.cat([v * mask, x], dim=1)
             pred = self._net(inp)
@@ -105,7 +106,7 @@ class DropoutNet(ColdStartMethod):
             loss.backward()
             opt.step()
 
-        # латент cold-айтемов: преференции = 0, только контент
+        # latent of cold items: preferences = 0, content only
         self._net.eval()
         cold = inputs.cold_features
         cold_mat = np.asarray(_dense(cold.matrix), dtype=np.float32)
@@ -144,7 +145,7 @@ class DropoutNet(ColdStartMethod):
 
 
 def _dense(matrix: object) -> np.ndarray:
-    """Привести признаки к плотному ndarray (sparse → toarray)."""
+    """Convert features to a dense ndarray (sparse -> toarray)."""
     todense = getattr(matrix, "toarray", None)
     if callable(todense):
         return np.asarray(todense())

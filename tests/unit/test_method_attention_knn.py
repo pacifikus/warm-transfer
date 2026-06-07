@@ -1,4 +1,4 @@
-"""Тесты метода attention_knn: контракт, softmax-веса, доминирование при малой T."""
+"""attention_knn method tests: contract, softmax weights, dominance at small T."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from warmtransfer.types import ItemFeatures, TransferInputs
 
 
 def _inputs() -> TransferInputs:
-    # 3 warm-айтема (10, 11, 12) и 1 cold (20).
+    # 3 warm items (10, 11, 12) and 1 cold (20).
     warm = ItemFeatures(
         np.array([10, 11, 12]),
         np.array([[1.0, 0.0], [0.0, 1.0], [0.5, 0.5]]),
@@ -20,9 +20,9 @@ def _inputs() -> TransferInputs:
     )
     cold = ItemFeatures(np.array([20]), np.array([[1.0, 0.0]]), ["g0", "g1"])
     train = pd.DataFrame({C.User: [1, 1, 1], C.Item: [10, 11, 12], C.Weight: 1.0, C.Datetime: 0})
-    # один пользователь, скоры донора по warm-айтемам
+    # single user, donor scores over warm items
     donor = pd.DataFrame({C.User: [1, 1, 1], C.Item: [10, 11, 12], C.Score: [1.0, 0.5, 0.0]})
-    # cold-айтем 20 ближе всего к warm 10, затем 12, затем 11
+    # cold item 20 is closest to warm 10, then 12, then 11
     sim = np.array([[0.9, 0.1, 0.5]])
     return TransferInputs(
         donor_scores=donor,
@@ -52,20 +52,20 @@ def test_get_params() -> None:
 
 
 def test_small_temperature_dominates_top_neighbor() -> None:
-    # При малой temperature вес самого похожего соседа (warm 10, sim=0.9) ≈ 1,
-    # поэтому скор cold-айтема ≈ скор донора по warm 10 (=1.0).
+    # At small temperature the weight of the most similar neighbor (warm 10, sim=0.9) ≈ 1,
+    # so the cold item's score ≈ the donor score for warm 10 (=1.0).
     m = AttentionKNN(k=3, temperature=0.001).fit(_inputs(), seed=0)
     reco = m.predict(np.array([1]), np.array([20]))
     score = float(reco[C.Score].iloc[0])
     assert abs(score - 1.0) < 1e-3
 
-    # явно проверим веса: топ-сосед доминирует
+    # explicitly check the weights: the top neighbor dominates
     top_weight = m._weights[0][0]  # type: ignore[attr-defined]
     assert top_weight > 0.999
 
 
 def test_large_temperature_approaches_uniform() -> None:
-    # При большой temperature softmax → равномерное распределение по k соседям.
+    # At large temperature softmax → uniform distribution over the k neighbors.
     m = AttentionKNN(k=3, temperature=1e6).fit(_inputs(), seed=0)
     w = m._weights[0]  # type: ignore[attr-defined]
     assert np.allclose(w, np.full(3, 1.0 / 3), atol=1e-4)

@@ -1,6 +1,6 @@
-"""Контентное сходство cold→warm (опционально; может делегироваться пользователю).
+"""Content similarity cold->warm (optional; may be delegated to the user).
 
-Наполняется в Фазе 1+ (cosine, kNN-граф). Здесь — точка сборки.
+Populated in Phase 1+ (cosine, kNN graph). This is the assembly point.
 """
 
 from __future__ import annotations

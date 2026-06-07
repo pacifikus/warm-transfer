@@ -1,8 +1,8 @@
-"""Типизированные обёртки над pandas-операциями.
+"""Typed wrappers around pandas operations.
 
-Стабы pandas дают ложные срабатывания: ``df[col]`` выводится как ``Series | DataFrame``,
-а ``series.unique()``/``series.map(dict)`` — как ``Unknown``. Эти хелперы — единая точка
-каста на границе с pandas, чтобы код вызова оставался чистым и типобезопасным.
+The pandas stubs produce false positives: ``df[col]`` is inferred as ``Series | DataFrame``,
+and ``series.unique()``/``series.map(dict)`` as ``Unknown``. These helpers are a single
+casting point at the pandas boundary, keeping call-site code clean and type-safe.
 """
 
 from __future__ import annotations
@@ -14,12 +14,12 @@ import pandas as pd
 
 
 def unique_sorted(s: pd.Series | pd.DataFrame) -> np.ndarray:
-    """Отсортированные уникальные значения колонки как ndarray."""
+    """Sorted unique values of a column as an ndarray."""
     col = cast("pd.Series", s)
     return np.sort(np.asarray(col.unique()))
 
 
 def map_codes(s: pd.Series | pd.DataFrame, mapping: dict) -> np.ndarray:
-    """Отобразить значения колонки в коды по словарю (ndarray)."""
+    """Map column values to codes via a dictionary (ndarray)."""
     col = cast("pd.Series", s)
     return np.asarray(col.map(mapping).to_numpy())

@@ -1,4 +1,4 @@
-"""Тесты пользовательских примеров."""
+"""Tests for user-facing examples."""
 
 from __future__ import annotations
 

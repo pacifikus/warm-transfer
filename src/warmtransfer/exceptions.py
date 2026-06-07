@@ -1,27 +1,27 @@
-"""Исключения библиотеки."""
+"""Library exceptions."""
 
 from __future__ import annotations
 
 
 class ColdScoreError(Exception):
-    """Базовое исключение библиотеки."""
+    """Base library exception."""
 
 
 class SchemaError(ColdScoreError):
-    """Нарушение схемы входного DataFrame (нет колонки, неверный dtype, дубликаты, NaN)."""
+    """Input DataFrame schema violation (missing column, wrong dtype, duplicates, NaN)."""
 
 
 class MissingInputError(ColdScoreError):
-    """Методу не передан обязательный вход (см. ``ColdStartMethod.requires``)."""
+    """A required input was not provided to the method (see ``ColdStartMethod.requires``)."""
 
 
 class NotFittedError(ColdScoreError):
-    """Вызов ``predict`` до ``fit``."""
+    """``predict`` called before ``fit``."""
 
 
 class RegistryError(ColdScoreError):
-    """Ошибка реестра компонентов (дубликат имени, неизвестное имя)."""
+    """Component registry error (duplicate name, unknown name)."""
 
 
 class LeakageError(ColdScoreError):
-    """Обнаружена утечка cold-айтемов в обучающие данные (нарушение eval-протокола)."""
+    """Cold items leaked into the training data (eval protocol violation)."""
