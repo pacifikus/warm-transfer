@@ -1,10 +1,10 @@
 name: release
 
-# Публикация на PyPI по git-тегу вида v0.1.0 через Trusted Publishing (OIDC).
-# Токены НЕ нужны: на PyPI в настройках проекта warm-transfer нужно один раз
-# завести trusted publisher — репозиторий pacifikus/warm-transfer, workflow
-# release.yml, environment pypi. После этого `git tag v0.1.0 && git push --tags`
-# автоматически собирает и публикует релиз.
+# Publish to PyPI on a git tag like v0.1.0 via Trusted Publishing (OIDC).
+# No tokens needed: in the warm-transfer project settings on PyPI, register a
+# trusted publisher once — repository pacifikus/warm-transfer, workflow
+# release.yml, environment pypi. After that `git tag v0.1.0 && git push --tags`
+# builds and publishes the release automatically.
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
-      id-token: write # OIDC-токен для Trusted Publishing
+      id-token: write # OIDC token for Trusted Publishing
     steps:
       - uses: actions/checkout@v4
       - name: Install uv

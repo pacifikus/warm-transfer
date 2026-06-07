@@ -1,7 +1,7 @@
-"""Загрузчик GoodBooks-10k.
+"""GoodBooks-10k loader.
 
-Контент айтема (книги): one-hot топ-200 авторов (первый автор) + one-hot бакета
-десятилетия публикации. Используется для контентного сходства cold→warm.
+Item content (books): one-hot of the top-200 authors (first author) + one-hot of the
+publication-decade bucket. Used for content-based cold->warm similarity.
 """
 
 from __future__ import annotations
@@ -23,13 +23,13 @@ BOOKS_URL = (
     "https://raw.githubusercontent.com/zygmuntz/goodbooks-10k/master/books.csv"
 )
 
-#: Сколько самых частых авторов оставляем в one-hot.
+#: How many of the most frequent authors we keep in the one-hot.
 TOP_AUTHORS = 200
 
 
 @register_dataset("goodbooks")
 class GoodBooks10k(DatasetLoader):
-    """GoodBooks-10k: ~53k пользователей, 10k книг, ~6M рейтингов (1..5)."""
+    """GoodBooks-10k: ~53k users, 10k books, ~6M ratings (1..5)."""
 
     def load(self) -> Dataset:
         root = cache_dir("goodbooks")
@@ -52,12 +52,12 @@ class GoodBooks10k(DatasetLoader):
     def describe(self) -> dict:
         return {
             "name": "goodbooks",
-            "domain": "книги",
-            "feedback": "explicit (рейтинги 1..5)",
-            "size": "~53k пользователей, 10k книг, ~6M рейтингов",
+            "domain": "books",
+            "feedback": "explicit (ratings 1..5)",
+            "size": "~53k users, 10k books, ~6M ratings",
             "content": (
-                f"one-hot топ-{TOP_AUTHORS} авторов (первый автор) + "
-                "one-hot бакета десятилетия публикации"
+                f"one-hot of the top-{TOP_AUTHORS} authors (first author) + "
+                "one-hot of the publication-decade bucket"
             ),
             "ratings_url": RATINGS_URL,
             "books_url": BOOKS_URL,
@@ -65,14 +65,14 @@ class GoodBooks10k(DatasetLoader):
 
 
 def _first_author(authors: object) -> str:
-    """Первый автор (до запятой). Пропуски → пустая строка."""
+    """First author (up to the comma). Missing values -> empty string."""
     if not isinstance(authors, str):
         return ""
     return authors.split(",")[0].strip()
 
 
 def _decade_bucket(year: object) -> str:
-    """Бакет десятилетия по году публикации. Пропуски → отдельная категория."""
+    """Decade bucket by publication year. Missing values -> a separate category."""
     if year is None or (isinstance(year, float) and np.isnan(year)):
         return "decade_unknown"
     try:
@@ -83,10 +83,10 @@ def _decade_bucket(year: object) -> str:
 
 
 def _books_to_features(books: pd.DataFrame) -> ItemFeatures:
-    """One-hot топ-N авторов (первый автор) + one-hot бакета десятилетия.
+    """One-hot of the top-N authors (first author) + one-hot of the decade bucket.
 
-    Объединяет обе группы признаков в одну float-матрицу. ``feature_names``
-    содержит сначала имена авторов (с префиксом ``author=``), затем десятилетия.
+    Merges both feature groups into a single float matrix. ``feature_names``
+    contains the author names first (with the ``author=`` prefix), then the decades.
     """
     item_ids = np.asarray(cast("pd.Series", books["book_id"]).to_numpy())
     n = len(books)
@@ -94,7 +94,7 @@ def _books_to_features(books: pd.DataFrame) -> ItemFeatures:
     authors_col = cast("pd.Series", books["authors"])
     first_authors = [_first_author(a) for a in authors_col.tolist()]
 
-    # топ-N авторов по частоте (исключаем пустые)
+    # top-N authors by frequency (excluding empty ones)
     counts = pd.Series([a for a in first_authors if a]).value_counts()
     ranked = cast("list[str]", counts.index.tolist())
     top_authors: list[str] = [str(a) for a in ranked[:TOP_AUTHORS]]

@@ -1,10 +1,10 @@
-"""Анализ recall@10 по бакетам популярности cold-айтемов (голова/хвост).
+"""Analyze recall@10 across popularity buckets of cold items (head/tail).
 
-Прогоняет один cell (датасет × ALS), считает recall@10 по бакетам популярности cold-айтемов
-для цели и сильных трансфер-методов. Показывает, где трансфер выигрывает — на массовых или
-нишевых cold-айтемах.
+Runs a single cell (dataset x ALS), computes recall@10 across popularity buckets of cold items
+for the target and strong transfer methods. Shows where transfer wins -- on mass-market or
+niche cold items.
 
-Запуск: ``uv run python scripts/popularity_buckets.py [dataset]`` (по умолчанию ml-1m).
+Run: ``uv run python scripts/popularity_buckets.py [dataset]`` (defaults to ml-1m).
 """
 
 from __future__ import annotations
@@ -42,11 +42,11 @@ def main() -> None:
     cold_features = ds.item_features.subset(split.cold_items)
     similarity = content_similarity(cold_features, warm_features)
 
-    # популярность cold-айтемов по ПОЛНЫМ взаимодействиям (как в стратификации сплита)
+    # cold-item popularity over the FULL interactions (as in the split stratification)
     full_pop = cast("dict", ds.interactions.groupby(C.Item).size().to_dict())
     item_pop = {it: int(full_pop.get(it, 0)) for it in split.cold_items}
 
-    # eval-пользователи и ground truth
+    # eval users and ground truth
     test_users = np.sort(np.asarray(split.test[C.User].unique()))
     if len(test_users) > 2000:
         rng = np.random.default_rng(SEED)
@@ -80,8 +80,8 @@ def main() -> None:
         val_interactions=val_interactions,
     )
 
-    print(f"\n=== recall@{K} по бакетам популярности cold-айтемов: {dataset_name} × als ===")
-    print("(bucket 0 = самые нишевые cold-айтемы, выше = популярнее)\n")
+    print(f"\n=== recall@{K} by cold-item popularity bucket: {dataset_name} × als ===")
+    print("(bucket 0 = most niche cold items, higher = more popular)\n")
     frames = []
     for name in METHODS:
         method = methods.get(name)().fit(inputs, seed=SEED)

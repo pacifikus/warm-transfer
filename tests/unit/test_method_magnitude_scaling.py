@@ -1,4 +1,4 @@
-"""Тест magnitude_scaling: дебиасинг популярности по магнитуде cold-эмбеддинга."""
+"""Test for magnitude_scaling: popularity debiasing by cold embedding magnitude."""
 
 from __future__ import annotations
 
@@ -16,11 +16,11 @@ def _feats(ids: list[int], rows: list[list[float]]) -> ItemFeatures:
 
 
 def _inputs() -> TransferInputs:
-    # warm-эмбеддинги с нормами 1 и 3 → mu_w = 2
+    # warm embeddings with norms 1 and 3 -> mu_w = 2
     warm = _feats([10, 11], [[1.0, 0.0], [0.0, 1.0]])
     item_emb = np.array([[1.0, 0.0], [3.0, 0.0]], dtype=float)
     user_emb = np.array([[1.0, 0.0]], dtype=float)
-    # cold-контент совпадает с warm → факторы будут ~ соответствующие нормы
+    # cold content matches warm -> factors will be ~ the corresponding norms
     return TransferInputs(
         donor_scores=pd.DataFrame({C.User: [1], C.Item: [10], C.Score: [1.0]}),
         train_interactions=pd.DataFrame(
@@ -47,9 +47,9 @@ def test_ms_pulls_norms_toward_warm_mean() -> None:
     base_norms = np.linalg.norm(base._cold_emb, axis=1)
     ms_norms = np.linalg.norm(ms._cold_emb, axis=1)
     mu_w = ms._warm_mean_norm
-    # дисперсия норм после стягивания меньше — разброс популярности сжат
+    # variance of norms after shrinkage is smaller -- popularity spread is compressed
     assert np.std(ms_norms) < np.std(base_norms)
-    # каждая норма ближе к mu_w, чем была
+    # each norm is closer to mu_w than it was before
     assert np.all(np.abs(ms_norms - mu_w) <= np.abs(base_norms - mu_w) + 1e-9)
 
 
@@ -66,7 +66,7 @@ def test_ms_direction_preserved() -> None:
     base.fit(_inputs(), seed=0)
     ms = MagnitudeScaling(alpha=1.0, ms_alpha=2.0)
     ms.fit(_inputs(), seed=0)
-    # направление не меняется — только длина
+    # direction does not change -- only the length
     for b, s in zip(base._cold_emb, ms._cold_emb, strict=True):
         nb, ns = np.linalg.norm(b), np.linalg.norm(s)
         if nb > 0 and ns > 0:

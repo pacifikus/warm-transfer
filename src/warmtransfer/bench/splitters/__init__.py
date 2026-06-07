@@ -1,4 +1,4 @@
-"""Сплиттеры. Импорт подмодулей регистрирует их в реестре ``splitters``."""
+"""Splitters. Importing submodules registers them in the ``splitters`` registry."""
 
 from __future__ import annotations
 

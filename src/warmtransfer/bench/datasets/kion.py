@@ -1,8 +1,8 @@
-"""Загрузчик MTS KION (фильмы/сериалы, RU-домен, implicit feedback).
+"""MTS KION loader (movies/series, RU domain, implicit feedback).
 
-Контент айтема: multi-hot жанров + multi-hot топ-N стран + one-hot десятилетия выпуска +
-one-hot типа контента (film/series). Взаимодействия implicit; отсекаем случайные клики по
-порогу ``watched_pct`` и берём бинарный вес.
+Item content: multi-hot of genres + multi-hot of top-N countries + one-hot of the release
+decade + one-hot of the content type (film/series). Interactions are implicit; we drop
+accidental clicks using the ``watched_pct`` threshold and take a binary weight.
 """
 
 from __future__ import annotations
@@ -17,23 +17,23 @@ from warmtransfer.bench.datasets.base import DatasetLoader, register_dataset
 from warmtransfer.columns import Columns as C
 from warmtransfer.types import Dataset, ItemFeatures
 
-#: Зеркало официального датасета (англоязычная версия контента).
+#: Mirror of the official dataset (English-language version of the content).
 KION_URL = (
     "https://github.com/irsafilo/KION_DATASET/raw/"
     "f69775be31fa5779907cf0a92ddedb70037fb5ae/data_en.zip"
 )
 
-#: Минимальный процент просмотра, ниже которого взаимодействие считаем случайным кликом.
+#: Minimum watch percentage below which an interaction is treated as an accidental click.
 MIN_WATCHED_PCT = 10.0
-#: Сколько самых частых стран оставляем в multi-hot.
+#: How many of the most frequent countries to keep in the multi-hot.
 TOP_COUNTRIES = 50
-#: Размерность TF-IDF словаря для текстового варианта контента.
+#: TF-IDF vocabulary size for the text content variant.
 TFIDF_MAX_FEATURES = 1000
 
 
 @register_dataset("kion")
 class Kion(DatasetLoader):
-    """MTS KION: ~860k пользователей, ~15k айтемов, ~5M просмотров (implicit)."""
+    """MTS KION: ~860k users, ~15k items, ~5M views (implicit)."""
 
     def load(self) -> Dataset:
         interactions, items = _load_raw()
@@ -46,12 +46,12 @@ class Kion(DatasetLoader):
     def describe(self) -> dict:
         return {
             "name": "kion",
-            "domain": "фильмы/сериалы (RU)",
+            "domain": "movies/series (RU)",
             "feedback": "implicit (watched_pct)",
-            "size": "~860k пользователей, ~15k айтемов, ~5M просмотров",
+            "size": "~860k users, ~15k items, ~5M views",
             "content": (
-                f"multi-hot жанров + multi-hot топ-{TOP_COUNTRIES} стран + "
-                "one-hot десятилетия + one-hot типа (film/series)"
+                f"multi-hot of genres + multi-hot of top-{TOP_COUNTRIES} countries + "
+                "one-hot of decade + one-hot of type (film/series)"
             ),
             "url": KION_URL,
         }
@@ -59,11 +59,11 @@ class Kion(DatasetLoader):
 
 @register_dataset("kion-text")
 class KionText(DatasetLoader):
-    """KION с текстовым контентом: TF-IDF по описанию/ключам/жанрам/названию ([MA]).
+    """KION with text content: TF-IDF over description/keywords/genres/title ([MA]).
 
-    Те же взаимодействия, что у ``kion``, но контент айтема — TF-IDF-вектор текста (а не
-    категориальные one-hot). Позволяет проверить, улучшает ли богатый текстовый контент
-    перенос скоров на cold-айтемы.
+    The same interactions as ``kion``, but the item content is a TF-IDF text vector (rather
+    than categorical one-hot). Lets us check whether rich text content improves score
+    transfer to cold items.
     """
 
     def load(self) -> Dataset:
@@ -77,18 +77,18 @@ class KionText(DatasetLoader):
     def describe(self) -> dict:
         return {
             "name": "kion-text",
-            "domain": "фильмы/сериалы (RU)",
+            "domain": "movies/series (RU)",
             "feedback": "implicit (watched_pct)",
             "content": (
-                f"TF-IDF (max_features={TFIDF_MAX_FEATURES}) по "
-                "описанию + ключам + жанрам + названию"
+                f"TF-IDF (max_features={TFIDF_MAX_FEATURES}) over "
+                "description + keywords + genres + title"
             ),
             "url": KION_URL,
         }
 
 
 def _load_raw() -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Скачать KION и вернуть (interactions long-format, items DataFrame)."""
+    """Download KION and return (interactions long-format, items DataFrame)."""
     root = cache_dir("kion")
     archive = download(KION_URL, root / "data_en.zip")
     data_dir = unzip(archive, root / "extracted") / "data_en"
@@ -111,7 +111,7 @@ def _load_raw() -> tuple[pd.DataFrame, pd.DataFrame]:
 
 
 def _items_to_tfidf(items: pd.DataFrame) -> ItemFeatures:
-    """TF-IDF по объединённому тексту (описание + ключи + жанры + название)."""
+    """TF-IDF over the combined text (description + keywords + genres + title)."""
     from scipy.sparse import csr_matrix
     from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -125,14 +125,14 @@ def _items_to_tfidf(items: pd.DataFrame) -> ItemFeatures:
 
     vec = TfidfVectorizer(max_features=TFIDF_MAX_FEATURES, stop_words="english")
     tfidf = csr_matrix(vec.fit_transform(corpus))
-    # уплотняем: ряд методов ждёт dense np.ndarray (np.asarray(..., dtype=float))
+    # densify: several methods expect a dense np.ndarray (np.asarray(..., dtype=float))
     matrix = np.asarray(tfidf.todense(), dtype=np.float32)
     feature_names = [f"tfidf={t}" for t in vec.get_feature_names_out().tolist()]
     return ItemFeatures(item_ids=item_ids, matrix=matrix, feature_names=feature_names)
 
 
 def _split_list(value: object) -> list[str]:
-    """Разбить строку вида 'drama, foreign' в список нормализованных токенов."""
+    """Split a string like 'drama, foreign' into a list of normalized tokens."""
     if not isinstance(value, str):
         return []
     return [t.strip().lower() for t in value.split(",") if t.strip()]
@@ -149,7 +149,7 @@ def _decade_bucket(year: object) -> str:
 
 
 def _items_to_features(items: pd.DataFrame) -> ItemFeatures:
-    """Контент KION → float-матрица (жанры + страны + десятилетие + тип контента)."""
+    """KION content -> float matrix (genres + countries + decade + content type)."""
     item_ids = np.asarray(cast("pd.Series", items["item_id"]).to_numpy())
     n = len(items)
 
@@ -161,7 +161,7 @@ def _items_to_features(items: pd.DataFrame) -> ItemFeatures:
         for c in cast("pd.Series", items["content_type"]).tolist()
     ]
 
-    # словари признаков
+    # feature vocabularies
     all_genres = sorted({g for row in genres for g in row})
     top_countries = [
         str(c)

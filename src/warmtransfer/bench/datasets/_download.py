@@ -1,4 +1,4 @@
-"""Скачивание и кэширование сырых датасетов в ``~/.warmtransfer/data``."""
+"""Download and cache raw datasets in ``~/.warmtransfer/data``."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ def cache_dir(name: str) -> Path:
 
 
 def download(url: str, dest: Path, *, timeout: int = 120) -> Path:
-    """Скачать ``url`` в ``dest`` (если ещё нет). Возвращает путь."""
+    """Download ``url`` to ``dest`` (if not already present). Returns the path."""
     if dest.exists():
         return dest
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -32,7 +32,7 @@ def download(url: str, dest: Path, *, timeout: int = 120) -> Path:
 
 
 def unzip(archive: Path, dest_dir: Path) -> Path:
-    """Распаковать zip в ``dest_dir`` (если ещё не распакован). Возвращает ``dest_dir``."""
+    """Extract zip into ``dest_dir`` (if not already extracted). Returns ``dest_dir``."""
     marker = dest_dir / ".unzipped"
     if marker.exists():
         return dest_dir

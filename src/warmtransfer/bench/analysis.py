@@ -1,8 +1,8 @@
-"""Анализ результатов по бакетам популярности cold-айтемов (голова/хвост).
+"""Results analysis by cold-item popularity buckets (head/tail).
 
-Декомпозирует recall@k по уровню популярности целевого cold-айтема: показывает, на каких
-айтемах метод выигрывает — на массовых (голова) или нишевых (хвост). Это раскрывает природу
-популярностного bias, обещанную в `docs/eval-protocol.md`.
+Decomposes recall@k by the popularity level of the target cold item: shows which items a
+method wins on — mass-market (head) or niche (tail). This reveals the nature of the
+popularity bias promised in `docs/eval-protocol.md`.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from warmtransfer.columns import Columns as C
 
 
 def _topk_sets(reco: pd.DataFrame, k: int) -> dict:
-    """Для каждого пользователя — множество top-k айтемов по убыванию скора."""
+    """For each user — the set of top-k items in descending score order."""
     ordered = reco.sort_values(C.Score, ascending=False)
     topk = ordered.groupby(C.User).head(k)
     out: dict = {}
@@ -31,19 +31,19 @@ def recall_by_popularity_bucket(
     n_buckets: int = 4,
     k: int = 10,
 ) -> pd.DataFrame:
-    """recall@k, разложенный по бакетам популярности cold-айтемов.
+    """recall@k decomposed by cold-item popularity buckets.
 
-    :param reco: рекомендации ``[user_id, item_id, score]``.
-    :param ground_truth: истинные взаимодействия cold-айтемов ``[user_id, item_id]``.
-    :param item_popularity: словарь ``item_id -> число взаимодействий`` (для бакетирования).
-    :param n_buckets: число бакетов популярности (квантили), от хвоста к голове.
-    :param k: глубина top-k.
+    :param reco: recommendations ``[user_id, item_id, score]``.
+    :param ground_truth: true cold-item interactions ``[user_id, item_id]``.
+    :param item_popularity: dict ``item_id -> interaction count`` (for bucketing).
+    :param n_buckets: number of popularity buckets (quantiles), from tail to head.
+    :param k: top-k depth.
     :return: DataFrame ``[bucket, n_relevant, recall@k, mean_pop, pop_range]``.
     """
     items = np.array(sorted(item_popularity))
     pops = np.array([item_popularity[i] for i in items], dtype=float)
 
-    # квантильные границы по популярности cold-айтемов
+    # quantile boundaries by cold-item popularity
     edges = np.quantile(pops, np.linspace(0, 1, n_buckets + 1))
     edges[-1] = np.inf
     bucket_of = {

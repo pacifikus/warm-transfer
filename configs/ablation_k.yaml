@@ -1,5 +1,5 @@
-# Абляция числа соседей k у наивного KNN (ML-1M × ALS).
-# Цель — показать, что наивный KNN не дотягивает до цели ни при каком k (популярностный bias).
+# Ablation of the neighbour count k for naive KNN (ML-1M × ALS).
+# Goal: show that naive KNN never reaches the target for any k (popularity bias).
 
 datasets:
   - ml-1m

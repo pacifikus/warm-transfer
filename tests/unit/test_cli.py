@@ -1,4 +1,4 @@
-"""Тесты CLI warmtransfer.bench без запуска тяжёлого бенчмарка."""
+"""Tests for the warmtransfer.bench CLI without running the heavy benchmark."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Тест attention_emb: softmax-взвешенное усреднение эмбеддингов соседей по контенту."""
+"""Test attention_emb: softmax-weighted averaging of content-neighbor embeddings."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ def _inputs() -> TransferInputs:
     warm = _feats([10, 11, 12, 13], [0, 0, 1, 1])
     item_emb = np.array([[1.0, 0.0], [1.0, 0.0], [0.0, 1.0], [0.0, 1.0]], dtype=float)
     user_emb = np.array([[1.0, 0.0], [0.0, 1.0]], dtype=float)
-    sim = np.array([[1.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 1.0]])  # cold[30→g0,31→g1]
+    sim = np.array([[1.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 1.0]])  # cold[30->g0,31->g1]
     return TransferInputs(
         donor_scores=pd.DataFrame({C.User: [1], C.Item: [10], C.Score: [1.0]}),
         train_interactions=pd.DataFrame(

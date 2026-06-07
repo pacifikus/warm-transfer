@@ -1,8 +1,8 @@
 # API Reference
 
-Автоматически из docstring'ов (mkdocstrings).
+Automatically generated from docstrings (mkdocstrings).
 
-## Контракты и типы
+## Contracts and types
 
 ::: warmtransfer.types
     options:
@@ -10,14 +10,14 @@
       show_root_heading: true
       heading_level: 3
 
-## Базовый метод
+## Base method
 
 ::: warmtransfer.methods.base.ColdStartMethod
     options:
       show_root_heading: true
       heading_level: 3
 
-## Cold-start методы
+## Cold-start methods
 
 ::: warmtransfer.methods.linmap.LinMap
     options: { show_root_heading: true, heading_level: 3 }
@@ -64,7 +64,7 @@
 ::: warmtransfer.methods.dropoutnet.DropoutNet
     options: { show_root_heading: true, heading_level: 3 }
 
-## Конфиг и результаты
+## Config and results
 
 ::: warmtransfer.bench.config.BenchConfig
     options: { show_root_heading: true, heading_level: 3 }
@@ -74,14 +74,14 @@
       show_root_heading: true
       heading_level: 3
 
-## Метрики
+## Metrics
 
 ::: warmtransfer.metrics
     options:
       show_root_heading: true
       heading_level: 3
 
-## Бенчмарк
+## Benchmark
 
 ::: warmtransfer.bench.runner.BenchmarkRunner
     options: { show_root_heading: true, heading_level: 3 }

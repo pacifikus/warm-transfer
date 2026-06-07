@@ -1,7 +1,7 @@
-"""Метрики качества рекомендаций (собственная корректная реализация).
+"""Recommendation quality metrics (our own correct implementation).
 
-Публичный вход — :func:`calc_metrics`: принимает рекомендации и ground truth в
-формате ``Columns`` и возвращает словарь ``{"recall@10": ..., "auc": ...}``.
+Public entry point — :func:`calc_metrics`: takes recommendations and ground truth in
+``Columns`` format and returns a dict ``{"recall@10": ..., "auc": ...}``.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ def ranking_metrics(
     ground_truth: pd.DataFrame,
     ks: tuple[int, ...] = (1, 5, 10),
 ) -> dict[str, float]:
-    """Все ранжирующие метрики для всех ``k``: ``{"recall@10": ..., ...}``."""
+    """All ranking metrics for all ``k`` values: ``{"recall@10": ..., ...}``."""
     ranked = ranked_lists(reco)
     relevant = relevant_sets(ground_truth)
     out: dict[str, float] = {}
@@ -43,11 +43,11 @@ def ranking_metrics(
 
 
 def mean_user_auc(reco: pd.DataFrame, ground_truth: pd.DataFrame) -> float:
-    """Средний по пользователям AUC.
+    """Mean per-user AUC.
 
-    ``reco`` должен содержать скоры по ВСЕМ айтемам-кандидатам каждого пользователя
-    (полная сетка user × cold_item). Положительные — айтемы из ``ground_truth``.
-    Усредняется по пользователям, у которых присутствуют оба класса.
+    ``reco`` must contain scores for ALL candidate items of each user
+    (the full user × cold_item grid). Positives are items from ``ground_truth``.
+    Averaged over users that have both classes present.
     """
     relevant = relevant_sets(ground_truth)
     vals: list[float] = []
@@ -65,10 +65,10 @@ def mean_user_auc(reco: pd.DataFrame, ground_truth: pd.DataFrame) -> float:
 
 
 def global_auc(reco: pd.DataFrame, ground_truth: pd.DataFrame) -> float:
-    """Глобальный AUC: пул всех пар (user, cold_item) с метками 1/0 — один общий AUC.
+    """Global AUC: pool all (user, cold_item) pairs with 1/0 labels into one common AUC.
 
-    Сильнее проявляет popularity-сигнал, чем per-user усреднение; используется для
-    сверки с протоколами, где AUC считается по всем парам сразу.
+    Exposes the popularity signal more strongly than per-user averaging; used to
+    cross-check against protocols where AUC is computed over all pairs at once.
     """
     gt_pairs = set(zip(ground_truth[C.User], ground_truth[C.Item], strict=True))
     pairs = list(zip(reco[C.User], reco[C.Item], strict=True))
@@ -83,7 +83,7 @@ def calc_metrics(
     *,
     include_auc: bool = True,
 ) -> dict[str, float]:
-    """Полный набор метрик: ranking@k (+ per-user и глобальный AUC по сетке кандидатов)."""
+    """Full metric set: ranking@k (+ per-user and global AUC over the candidate grid)."""
     out = ranking_metrics(reco, ground_truth, ks)
     if include_auc:
         out["auc"] = mean_user_auc(reco, ground_truth)

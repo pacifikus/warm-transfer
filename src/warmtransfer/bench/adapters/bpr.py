@@ -1,8 +1,8 @@
-"""Донор: Bayesian Personalized Ranking (библиотека implicit).
+"""Donor: Bayesian Personalized Ranking (implicit library).
 
-Парный ranking-донор (в отличие от поточечного ALS): оптимизирует порядок warm-айтемов
-для каждого пользователя. Интерфейс совпадает с ALS — скоры как скалярное произведение
-факторов. Нужен как второй MF-донор для проверки донор-агностичности на разных лоссах.
+Pairwise ranking donor (unlike the pointwise ALS): it optimizes the ordering of warm
+items for each user. The interface matches ALS — scores are the dot product of factors.
+Needed as a second MF donor to test donor-agnosticism across different losses.
 """
 
 from __future__ import annotations
@@ -23,10 +23,10 @@ from warmtransfer.types import Dataset
 class BPRAdapter(ModelAdapter):
     """implicit BayesianPersonalizedRanking.
 
-    :param factors: размерность латентного пространства.
-    :param learning_rate: шаг SGD.
-    :param regularization: L2-регуляризация.
-    :param iterations: число эпох.
+    :param factors: dimensionality of the latent space.
+    :param learning_rate: SGD step size.
+    :param regularization: L2 regularization.
+    :param iterations: number of epochs.
     """
 
     def __init__(
@@ -75,17 +75,17 @@ class BPRAdapter(ModelAdapter):
         return self
 
     def score(self, user_ids: np.ndarray, item_ids: np.ndarray) -> pd.DataFrame:
-        """Скоры для кросс-произведения user_ids × item_ids (только известные warm)."""
+        """Scores for the cross product user_ids × item_ids (only known warm items)."""
         if self._user_ids is None or self._item_ids is None:
-            raise RuntimeError("BPRAdapter: вызовите fit() до score()")
+            raise RuntimeError("BPRAdapter: call fit() before score()")
 
         u_known = [u for u in user_ids if u in self._u_pos]
         i_known = [it for it in item_ids if it in self._i_pos]
         u_idx = np.array([self._u_pos[u] for u in u_known], dtype=int)
         i_idx = np.array([self._i_pos[it] for it in i_known], dtype=int)
 
-        # implicit BPR держит bias в доп.столбце факторов (user-столбец=1, item-столбец=bias);
-        # полное скалярное произведение даёт корректный скор с учётом bias.
+        # implicit BPR keeps the bias in an extra factor column (user column=1, item column=bias);
+        # the full dot product yields a correct score that accounts for the bias.
         uf = np.asarray(self._model.user_factors[u_idx])
         itf = np.asarray(self._model.item_factors[i_idx])
         scores = uf @ itf.T  # [n_u, n_i]

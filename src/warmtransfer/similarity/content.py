@@ -1,7 +1,7 @@
-"""Контентное сходство cold→warm айтемов (косинус).
+"""Content similarity of cold->warm items (cosine).
 
-Может делегироваться пользователю библиотеки (он передаёт готовую матрицу сходства),
-либо строиться здесь из ``ItemFeatures``.
+Can be delegated to the library user (they pass a ready-made similarity matrix),
+or built here from ``ItemFeatures``.
 """
 
 from __future__ import annotations
@@ -13,9 +13,9 @@ from warmtransfer.types import ItemFeatures
 
 
 def content_similarity(cold: ItemFeatures, warm: ItemFeatures) -> np.ndarray:
-    """Косинусное сходство [n_cold, n_warm] между cold и warm айтемами.
+    """Cosine similarity [n_cold, n_warm] between cold and warm items.
 
-    Строки выровнены по ``cold.item_ids``, столбцы — по ``warm.item_ids``.
+    Rows are aligned to ``cold.item_ids``, columns to ``warm.item_ids``.
     """
     cold_mat = np.asarray(cold.matrix, dtype=float)
     warm_mat = np.asarray(warm.matrix, dtype=float)

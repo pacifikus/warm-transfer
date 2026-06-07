@@ -1,4 +1,4 @@
-"""Cold-start методы. Импорт подмодулей регистрирует их в реестре ``methods``."""
+"""Cold-start methods. Importing the submodules registers them in the ``methods`` registry."""
 
 from __future__ import annotations
 

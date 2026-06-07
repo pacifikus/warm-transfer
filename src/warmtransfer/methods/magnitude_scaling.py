@@ -1,21 +1,21 @@
-"""Magnitude Scaling — post-hoc дебиасинг популярности по магнитуде эмбеддинга.
+"""Magnitude Scaling — post-hoc popularity debiasing based on embedding magnitude.
 
-Меняет только длину (норму) вектора cold-айтема, не направление. Магнитуда эмбеддинга —
-прокси популярности: айтемы с большой нормой получают систематически высокие скоры
-(``score = user · item``). Перетягиваем норму каждого cold-айтема к средней норме warm-айтемов
-``mu_w``, балансируя распределение предсказаний по айтемам:
+Changes only the length (norm) of the cold-item vector, not its direction. The embedding
+magnitude is a proxy for popularity: items with large norms receive systematically high scores
+(``score = user · item``). We pull the norm of each cold item toward the mean norm of warm items
+``mu_w``, balancing the distribution of predictions across items:
 
     gamma_c = (||x_c|| + alpha * mu_w) / (||x_c|| * (1 + alpha)),
     x_c' = gamma_c * x_c    =>    ||x_c'|| = (||x_c|| + alpha * mu_w) / (1 + alpha),
 
-то есть новая норма — выпуклая комбинация ||x_c|| и mu_w с весом alpha/(1+alpha) на mu_w
-(alpha→0: без изменений; alpha→inf: все нормы стянуты к mu_w).
+that is, the new norm is a convex combination of ||x_c|| and mu_w with weight alpha/(1+alpha) on
+mu_w (alpha→0: no change; alpha→inf: all norms pulled to mu_w).
 
-Генератор cold-эмбеддингов берём от ``linmap_emb`` (Gantner): это даёт чистую абляцию
-«linmap_emb vs +magnitude scaling» — изолированный эффект дебиасинга. Не требует обучения
-самого скейлинга, только статистики warm-эмбеддингов ([EMB]).
+The cold-embedding generator is taken from ``linmap_emb`` (Gantner): this gives a clean ablation
+"linmap_emb vs +magnitude scaling" — the isolated effect of debiasing. It does not require
+training the scaling itself, only statistics of the warm embeddings ([EMB]).
 
-Ссылка: Meehan & Pauwels, "On Inherited Popularity Bias in Cold-Start Item
+Reference: Meehan & Pauwels, "On Inherited Popularity Bias in Cold-Start Item
 Recommendation", RecSys 2025.
 """
 
@@ -29,10 +29,10 @@ from warmtransfer.methods.linmap_emb import LinMapEmbedding
 
 @register_method("magnitude_scaling")
 class MagnitudeScaling(LinMapEmbedding):
-    """Gantner-генерация cold-эмбеддингов + дебиасинг популярности по магнитуде.
+    """Gantner generation of cold embeddings + popularity debiasing by magnitude.
 
-    :param alpha: L2-регуляризация Ridge (генератор контент → факторы).
-    :param ms_alpha: сила стягивания нормы к ``mu_w`` (0 — без дебиасинга).
+    :param alpha: L2 regularization of Ridge (content → factors generator).
+    :param ms_alpha: strength of pulling the norm toward ``mu_w`` (0 — no debiasing).
     """
 
     def __init__(self, alpha: float = 10.0, ms_alpha: float = 1.0) -> None:
@@ -43,7 +43,7 @@ class MagnitudeScaling(LinMapEmbedding):
         mu_w = self._warm_mean_norm
         norms = np.linalg.norm(self._cold_emb, axis=1)
         new_norms = (norms + self.ms_alpha * mu_w) / (1.0 + self.ms_alpha)
-        # gamma = new_norm / norm; для нулевого вектора оставляем ноль (нет направления)
+        # gamma = new_norm / norm; for a zero vector keep zero (no direction)
         gamma = np.divide(
             new_norms, norms, out=np.zeros_like(norms), where=norms > 0
         )

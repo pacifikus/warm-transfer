@@ -1,8 +1,8 @@
-"""Единые имена колонок для всех DataFrame в библиотеке.
+"""Unified column names for all DataFrames in the library.
 
-Конвенция перенята у MTS RecTools, чтобы API был идиоматичен его пользователям.
-Все компоненты (методы, метрики, сплиттеры, адаптеры) обмениваются «длинными»
-(long-format) DataFrame с этими именами колонок.
+The convention is borrowed from MTS RecTools so that the API is idiomatic for its users.
+All components (methods, metrics, splitters, adapters) exchange long-format
+DataFrames with these column names.
 """
 
 from __future__ import annotations
@@ -11,9 +11,9 @@ from typing import Final
 
 
 class Columns:
-    """Namespace с фиксированными именами колонок.
+    """Namespace with fixed column names.
 
-    Использование::
+    Usage::
 
         from warmtransfer.columns import Columns as C
         df = df.rename(columns={"uid": C.User, "iid": C.Item})
@@ -21,14 +21,14 @@ class Columns:
 
     User: Final = "user_id"
     Item: Final = "item_id"
-    Weight: Final = "weight"  # вес/сила взаимодействия (float; 1.0 если веса нет)
-    Datetime: Final = "datetime"  # timestamp взаимодействия
-    Score: Final = "score"  # скор модели (донора или cold-start метода)
-    Rank: Final = "rank"  # ранг в выдаче, 1..k
+    Weight: Final = "weight"  # interaction weight/strength (float; 1.0 if no weight)
+    Datetime: Final = "datetime"  # interaction timestamp
+    Score: Final = "score"  # model score (donor or cold-start method)
+    Rank: Final = "rank"  # rank in the output, 1..k
 
-    #: Минимальный набор колонок взаимодействия.
+    #: Minimal set of interaction columns.
     Interactions: Final = (User, Item)
-    #: Сквозной формат рекомендаций/предсказаний.
+    #: End-to-end recommendations/predictions format.
     Recommendations: Final = (User, Item, Score, Rank)
-    #: Формат скоров донора (вход cold-start метода).
+    #: Donor scores format (input of a cold-start method).
     Scores: Final = (User, Item, Score)

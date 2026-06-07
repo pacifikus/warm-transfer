@@ -1,4 +1,4 @@
-# Deep-методы ([EMB], CPU): DropoutNet против LinMap/stacking_plus/цели на 3 доменах × ALS.
+# Deep methods ([EMB], CPU): DropoutNet vs LinMap/stacking_plus/target on 3 domains × ALS.
 
 datasets:
   - ml-1m

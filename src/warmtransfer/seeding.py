@@ -1,6 +1,6 @@
-"""Воспроизводимость: единая точка фиксации сидов.
+"""Reproducibility: a single point for seeding.
 
-``torch`` фиксируется опционально (он в extra ``deep``), чтобы core не зависел от него.
+``torch`` is seeded optionally (it lives in the ``deep`` extra), so that core does not depend on it.
 """
 
 from __future__ import annotations
@@ -12,9 +12,9 @@ import numpy as np
 
 
 def set_global_seed(seed: int) -> None:
-    """Зафиксировать сиды ``random``, ``numpy`` и (если установлен) ``torch``.
+    """Seed ``random``, ``numpy`` and (if installed) ``torch``.
 
-    Вызывается в начале каждого ``fit`` метода/адаптера и в начале прогона бенчмарка.
+    Called at the start of every method/adapter ``fit`` and at the start of a benchmark run.
     """
     os.environ["PYTHONHASHSEED"] = str(seed)
     random.seed(seed)
@@ -31,5 +31,5 @@ def set_global_seed(seed: int) -> None:
 
 
 def make_rng(seed: int) -> np.random.Generator:
-    """Локальный генератор numpy (предпочтительнее глобального состояния)."""
+    """Local numpy generator (preferable to global state)."""
     return np.random.default_rng(seed)

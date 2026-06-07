@@ -1,5 +1,5 @@
-# Полная матрица: 3 домена × 3 донора × все методы (seed=42).
-# embedding_avg ([EMB]) автоматически пропускается на CatBoost (нет эмбеддингов).
+# Full matrix: 3 domains × 3 donors × all methods (seed=42).
+# embedding_avg ([EMB]) is automatically skipped on CatBoost (no embeddings).
 
 datasets:
   - ml-1m

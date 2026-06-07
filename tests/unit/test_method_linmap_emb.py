@@ -1,4 +1,4 @@
-"""Тест linmap_emb (Gantner): Ridge контент → латентные факторы донора."""
+"""Test linmap_emb (Gantner): Ridge content -> donor latent factors."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ def _feats(ids: list[int], genres: list[int]) -> ItemFeatures:
 
 
 def _inputs() -> TransferInputs:
-    # warm: жанр g0 → фактор [1,0], жанр g1 → фактор [0,1]
+    # warm: genre g0 -> factor [1,0], genre g1 -> factor [0,1]
     warm = _feats([10, 11, 12, 13], [0, 0, 1, 1])
     item_emb = np.array([[1.0, 0.0], [1.0, 0.0], [0.0, 1.0], [0.0, 1.0]], dtype=float)
     user_emb = np.array([[1.0, 0.0], [0.0, 1.0]], dtype=float)
@@ -28,7 +28,7 @@ def _inputs() -> TransferInputs:
             {C.User: [1, 2], C.Item: [10, 12], C.Weight: 1.0, C.Datetime: 0}
         ),
         warm_features=warm,
-        cold_features=_feats([30, 31], [0, 1]),  # cold 30→g0, 31→g1
+        cold_features=_feats([30, 31], [0, 1]),  # cold 30->g0, 31->g1
         embeddings={
             "item": item_emb,
             "item_ids": np.array([10, 11, 12, 13]),
@@ -46,7 +46,7 @@ def test_linmap_emb_maps_content_to_factors() -> None:
     assert set(C.Scores) <= set(reco.columns)
     assert len(reco) == 4
     pivot = reco.pivot(index=C.User, columns=C.Item, values=C.Score)
-    # user1 (фактор g0) выше оценивает cold 30 (g0); user2 — cold 31 (g1)
+    # user1 (factor g0) scores cold 30 (g0) higher; user2 -> cold 31 (g1)
     assert pivot.loc[1, 30] > pivot.loc[1, 31]
     assert pivot.loc[2, 31] > pivot.loc[2, 30]
 

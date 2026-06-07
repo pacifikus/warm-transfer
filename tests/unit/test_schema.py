@@ -1,4 +1,4 @@
-"""Тесты валидации/нормализации входных DataFrame."""
+"""Tests for validation/normalization of input DataFrames."""
 
 from __future__ import annotations
 
@@ -19,13 +19,13 @@ def test_validate_interactions_adds_weight() -> None:
 
 def test_validate_interactions_missing_column() -> None:
     df = pd.DataFrame({C.User: [1]})
-    with pytest.raises(SchemaError, match="отсутствуют колонки"):
+    with pytest.raises(SchemaError, match="missing columns"):
         validate_interactions(df)
 
 
 def test_validate_interactions_duplicates() -> None:
     df = pd.DataFrame({C.User: [1, 1], C.Item: [10, 10]})
-    with pytest.raises(SchemaError, match="дублирующихся пар"):
+    with pytest.raises(SchemaError, match="duplicate"):
         validate_interactions(df)
 
 

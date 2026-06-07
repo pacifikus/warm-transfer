@@ -1,5 +1,5 @@
-# Пример прогона: ML-1M × ALS × (бейзлайны + наивный KNN).
-# Минимальная конфигурация для первого знакомства с бенчмарком.
+# Example run: ML-1M × ALS × (baselines + naive KNN).
+# Minimal configuration to get started with the benchmark.
 
 datasets:
   - ml-1m

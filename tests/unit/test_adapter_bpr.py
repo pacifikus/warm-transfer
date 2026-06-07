@@ -1,4 +1,4 @@
-"""Тест донора BPRAdapter: обучение + скоринг на маленьком synthetic-датасете."""
+"""Test for the BPRAdapter donor: training + scoring on a small synthetic dataset."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ pytestmark = pytest.mark.bench
 
 
 def _dataset() -> Dataset:
-    """5 пользователей, 6 айтемов."""
+    """5 users, 6 items."""
     users = [1, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5]
     items = [10, 11, 12, 10, 13, 11, 14, 12, 15, 13, 14, 15]
     inter = pd.DataFrame({C.User: users, C.Item: items, C.Weight: 1.0, C.Datetime: 0})
@@ -35,7 +35,7 @@ def test_bpr_fit_score_schema() -> None:
 def test_bpr_unknown_ids_filtered_and_embeddings() -> None:
     model = BPRAdapter(factors=8, iterations=10).fit(_dataset(), seed=0)
     reco = model.score(np.array([1, 999]), np.array([10, 888]))
-    assert len(reco) == 1  # только известная пара (1, 10)
+    assert len(reco) == 1  # only the known pair (1, 10)
 
     emb = model.embeddings()
     assert emb is not None
