@@ -52,6 +52,7 @@ def test_recommend_verdict_mentions_metric() -> None:
     inter, content, donor = _synthetic()
     res = recommend(inter, content, donor, seed=42, verbose=False)
     assert res.metric in res.verdict or "auc" in res.verdict.lower()
+    assert any(p in res.verdict for p in ("worth using", "adds little", "No transfer"))
     assert isinstance(str(res), str) and len(str(res)) > 0
 
 
@@ -90,6 +91,40 @@ def test_predict_different_cold_sets() -> None:
     r2 = res.predict(np.array([0, 1]), np.array([2, 3]))
     assert set(r1[C.Item]) == {0}
     assert set(r2[C.Item]) == {2, 3}
+
+
+def test_predict_val_winner_runs_when_carve_succeeds() -> None:
+    """A val-method winner (stacking_plus) predicts fine when production carves a val fold."""
+    inter, content, donor = _synthetic(n_users=80, n_items=60)
+    res = recommend(inter, content, donor, methods=["stacking_plus"], seed=42, verbose=False)
+    assert "stacking_plus" in res.leaderboard.index
+    reco = res.predict(np.array([0, 1, 2]), np.array([0, 1]))
+    assert list(reco.columns[:3]) == [C.User, C.Item, C.Score]
+    assert set(reco[C.Item]) == {0, 1}
+
+
+def test_predict_val_winner_falls_back_when_carve_fails() -> None:
+    """If the val winner cannot carve a production val fold, predict falls back gracefully."""
+    from warmtransfer.holdout import HoldoutConfig
+    from warmtransfer.recommend import AutoResult
+
+    inter, content, donor = _synthetic()
+    # leaderboard: val-winner on top, a val-free transfer (linmap) below as the fallback
+    board = pd.DataFrame(
+        {"auc": [0.9, 0.7]}, index=["stacking_plus", "linmap"]  # type: ignore[arg-type]
+    )
+    # min_item_interactions huge -> production val-carve finds no eligible items -> no val fold
+    res = AutoResult(
+        leaderboard=board, best="stacking_plus", best_transfer="stacking_plus",
+        baseline_best=None, metric="auc", verdict="x",
+        _ctx={"interactions": inter, "content": content, "donor_scores": donor,
+              "item_meta": None, "holdout": HoldoutConfig(min_item_interactions=10_000),
+              "seed": 42},
+    )
+    reco = res.predict(np.array([0, 1, 2]), np.array([0, 1]))
+    assert set(reco[C.Item]) == {0, 1}
+    # the fitted winner was the val-free fallback, not stacking_plus
+    assert res._fitted is not None and res._fitted.name == "linmap"
 
 
 def test_public_export() -> None:

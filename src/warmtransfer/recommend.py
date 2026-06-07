@@ -15,7 +15,8 @@ import pandas as pd
 
 from warmtransfer.columns import Columns as C
 from warmtransfer.holdout import HoldoutConfig, pseudo_cold_split
-from warmtransfer.methods.base import INPUT_KINDS, ColdStartMethod, methods
+from warmtransfer.methods.base import INPUT_KINDS, ColdStartMethod
+from warmtransfer.methods.base import methods as method_registry
 from warmtransfer.metrics import calc_metrics
 from warmtransfer.similarity import content_similarity
 from warmtransfer.types import Dataset, ItemFeatures, SplitResult, TransferInputs
@@ -39,7 +40,7 @@ def feasible_methods(
     optionally restricts to a subset of method names. Returns ``(run, skipped)`` where
     ``skipped`` maps a method name to a human-readable reason.
     """
-    all_names = list(methods.names())
+    all_names = list(method_registry.names())
     candidates = all_names if requested is None else [m for m in requested if m in all_names]
 
     run: list[str] = []
@@ -48,7 +49,7 @@ def feasible_methods(
         if name in EMBEDDING_METHODS:
             skipped[name] = "embedding methods are out of scope for recommend v1"
             continue
-        req = methods.get(name).requires
+        req = method_registry.get(name).requires
         missing = req - present
         if missing:
             skipped[name] = f"missing inputs: {sorted(missing)}"
@@ -209,16 +210,36 @@ class AutoResult:
         """
         cold = np.asarray(cold_item_ids)
         key = tuple(cold.tolist())
-        winner = self.best_transfer or self.best
         if self._fitted is None or self._fitted_key != key:
             ctx = self._ctx
-            needs_val = "val" in methods.get(winner).requires
+            winner = self.best_transfer or self.best
+            needs_val = "val" in method_registry.get(winner).requires
             inputs = build_production_inputs(
                 ctx["interactions"], ctx["content"], ctx["donor_scores"],
                 cold, ctx["item_meta"],
                 needs_val=needs_val, holdout=ctx["holdout"], seed=ctx["seed"],
             )
-            self._fitted = methods.get(winner)().fit(inputs, ctx["seed"])
+            if needs_val and inputs.val_interactions is None:
+                # production data too small to carve a val fold — fall back to the best
+                # val-free transfer method on the leaderboard
+                fallback = next(
+                    (m for m in self.leaderboard.index
+                     if m not in BASELINE_METHODS
+                     and "val" not in method_registry.get(m).requires),
+                    None,
+                )
+                if fallback is None:
+                    raise RuntimeError(
+                        f"Winner {winner!r} needs a val fold, but production data is too small "
+                        "to build one and no val-free transfer method is available."
+                    )
+                winner = fallback
+                inputs = build_production_inputs(
+                    ctx["interactions"], ctx["content"], ctx["donor_scores"],
+                    cold, ctx["item_meta"],
+                    needs_val=False, holdout=ctx["holdout"], seed=ctx["seed"],
+                )
+            self._fitted = method_registry.get(winner)().fit(inputs, ctx["seed"])
             self._fitted_key = key
         return self._fitted.predict(np.asarray(user_ids), cold)
 
@@ -265,7 +286,7 @@ def _eval_method(
 ) -> dict[str, float]:
     """Fit one method on the holdout and score it on test-cold. Raises on failure."""
     eval_users = np.asarray(pd.unique(split.test[C.User]))
-    model = methods.get(name)().fit(inputs, seed)
+    model = method_registry.get(name)().fit(inputs, seed)
     reco = model.predict(eval_users, split.cold_items)
     return calc_metrics(reco, split.test, ks)
 
@@ -309,7 +330,7 @@ def recommend(
     seeds = [seed + i for i in range(max(1, n_seeds))]
     per_seed: list[pd.DataFrame] = []
     for s in seeds:
-        split = pseudo_cold_split(Dataset(interactions, content, "user-data"), cfg, s)
+        split = pseudo_cold_split(Dataset(interactions), cfg, s)
         inputs = build_holdout_inputs(split, content, donor_scores, item_meta)
         rows: dict[str, dict[str, float]] = {}
         for name in run:
@@ -322,13 +343,16 @@ def recommend(
         per_seed.append(pd.DataFrame.from_dict(rows, orient="index"))
 
     board: pd.DataFrame = pd.concat(per_seed).groupby(level=0).mean()  # type: ignore[assignment]
+    # a method that failed on ANY seed must not appear with a partial (fewer-seed) result
+    failed = set(skipped)
+    board = board[~board.index.isin(failed)]  # type: ignore[assignment]
     if board.empty or metric not in board.columns:
         raise RuntimeError(
             f"All methods failed during evaluation; nothing to rank. Skipped: {skipped}"
         )
     board = board.sort_values(metric, ascending=False)
 
-    ran = [m for m in board.index if m not in skipped]
+    ran = list(board.index)  # board already excludes skipped methods
     if not ran:
         raise RuntimeError(f"No method produced a usable result. Skipped: {skipped}")
     transfers = [m for m in ran if m not in BASELINE_METHODS]

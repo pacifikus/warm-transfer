@@ -43,6 +43,10 @@ class HoldoutConfig:
             raise ValueError("val_frac must be in [0, 1)")
         if self.cold_frac + self.val_frac >= 1:
             raise ValueError("cold_frac + val_frac must be < 1")
+        if self.min_item_interactions < 0:
+            raise ValueError("min_item_interactions must be >= 0")
+        if self.n_pop_buckets < 1:
+            raise ValueError("n_pop_buckets must be >= 1")
 
 
 def _largest_remainder(weights: list[int], target: int) -> list[int]:

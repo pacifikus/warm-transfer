@@ -94,6 +94,9 @@ def test_build_holdout_inputs_strips_cold_scores() -> None:
 
     inputs = build_holdout_inputs(split, content, donor, item_meta=None)
     assert set(inputs.donor_scores[C.Item]) & set(split.cold_items) == set()
+    # anti-leak: donor scores must not contain VAL-cold items either
+    val_items = set(pd.unique(split.val[C.Item]))
+    assert set(inputs.donor_scores[C.Item]) & val_items == set()
     assert inputs.warm_features is not None
     assert inputs.cold_features is not None
     assert inputs.similarity is not None
