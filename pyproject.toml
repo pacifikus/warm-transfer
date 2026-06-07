@@ -7,6 +7,16 @@ authors = [
     { name = "Nikita Tenishev", email = "nik.tenishev@gmail.com" }
 ]
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["recommender-systems", "cold-start", "item-cold-start", "benchmark", "recsys"]
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Development Status :: 4 - Beta",
+    "Operating System :: OS Independent",
+]
 dependencies = [
     # === lightweight core: только то, что нужно для применения методов и метрик ===
     "numpy>=1.26",
@@ -58,6 +68,11 @@ packages = ["src/warmtransfer"]
 
 [project.scripts]
 warmbench = "warmtransfer.bench.__main__:main"
+
+[project.urls]
+Repository = "https://github.com/pacifikus/warm-transfer"
+Documentation = "https://pacifikus.github.io/warm-transfer/"
+Issues = "https://github.com/pacifikus/warm-transfer/issues"
 
 [tool.ruff]
 line-length = 100
