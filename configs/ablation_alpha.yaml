@@ -1,5 +1,5 @@
-# Абляция регуляризации Ridge у LinMap (ML-1M × ALS).
-# Цель — чувствительность LinMap к alpha; ожидаем плато в широком диапазоне.
+# Ablation of LinMap's Ridge regularization (ML-1M × ALS).
+# Goal: LinMap's sensitivity to alpha; we expect a plateau over a wide range.
 
 datasets:
   - ml-1m

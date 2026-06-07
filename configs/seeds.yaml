@@ -1,5 +1,5 @@
-# Разброс по сидам для headline-результата: 3 домена × ALS × ключевые методы × 5 сидов.
-# Даёт оценку дисперсии и устойчивости вывода «трансфер обходит цель».
+# Seed spread for the headline result: 3 domains × ALS × key methods × 5 seeds.
+# Estimates variance and the robustness of the "transfer beats the target" conclusion.
 
 datasets:
   - ml-1m
