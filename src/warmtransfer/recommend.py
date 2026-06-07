@@ -7,7 +7,16 @@ leaderboard, a verdict, and a ready-to-use fitted winner. See the design doc.
 
 from __future__ import annotations
 
+import warnings
+
+import numpy as np
+import pandas as pd
+
+from warmtransfer.columns import Columns as C
+from warmtransfer.holdout import HoldoutConfig, pseudo_cold_split
 from warmtransfer.methods.base import INPUT_KINDS, methods
+from warmtransfer.similarity import content_similarity
+from warmtransfer.types import Dataset, ItemFeatures, SplitResult, TransferInputs
 
 #: Trivial reference methods (not "transfer"); used by recommend()'s verdict step as the baseline.
 BASELINE_METHODS = frozenset(
@@ -72,3 +81,104 @@ def available_inputs_for(
         present.add("item_meta")
     assert present <= INPUT_KINDS
     return present
+
+
+def _scores_for(donor_scores: pd.DataFrame, item_ids: np.ndarray) -> pd.DataFrame:
+    """Filter donor_scores to the given item_ids (index reset)."""
+    mask = donor_scores[C.Item].isin(item_ids.tolist())
+    return donor_scores.loc[mask].reset_index(drop=True)
+
+
+def build_holdout_inputs(
+    split: SplitResult,
+    content: ItemFeatures,
+    donor_scores: pd.DataFrame,
+    item_meta: pd.DataFrame | None,
+) -> TransferInputs:
+    """Assemble ``TransferInputs`` for evaluating methods on one holdout fold.
+
+    Donor scores are restricted to warm items (the cold/val-cold items are "unseen").
+    Similarity is computed from content; the val-cold fold is attached when present.
+    """
+    warm_ids = split.warm_items
+    test_cold_ids = split.cold_items
+    warm_feat = content.subset(warm_ids)
+    cold_feat = content.subset(test_cold_ids)
+
+    inputs = TransferInputs(
+        donor_scores=_scores_for(donor_scores, warm_ids),
+        train_interactions=split.train,
+        warm_features=warm_feat,
+        cold_features=cold_feat,
+        similarity=content_similarity(cold_feat, warm_feat),
+        warm_items=warm_ids,
+        cold_items=test_cold_ids,
+        item_meta=item_meta,
+    )
+
+    if len(split.val):
+        val_cold_ids = np.asarray(pd.unique(split.val[C.Item]))
+        val_feat = content.subset(val_cold_ids)
+        inputs.val_cold_features = val_feat
+        inputs.val_similarity = content_similarity(val_feat, warm_feat)
+        inputs.val_interactions = split.val
+    return inputs
+
+
+def build_production_inputs(
+    interactions: pd.DataFrame,
+    content: ItemFeatures,
+    donor_scores: pd.DataFrame,
+    cold_item_ids: np.ndarray,
+    item_meta: pd.DataFrame | None,
+    *,
+    needs_val: bool,
+    holdout: HoldoutConfig,
+    seed: int,
+) -> TransferInputs:
+    """Assemble ``TransferInputs`` to refit the winner on ALL warm data for real cold items.
+
+    Warm = all items present in ``donor_scores``. For val-family winners we carve an internal
+    val-cold fold out of warm via the same pseudo-cold split (the real cold items stay the
+    prediction target).
+    """
+    warm_ids = np.asarray(pd.unique(donor_scores[C.Item]))
+    warm_feat = content.subset(warm_ids)
+    cold_ids = np.asarray(cold_item_ids)
+    cold_feat = content.subset(cold_ids)
+
+    inputs = TransferInputs(
+        donor_scores=_scores_for(donor_scores, warm_ids),
+        train_interactions=interactions,
+        warm_features=warm_feat,
+        cold_features=cold_feat,
+        similarity=content_similarity(cold_feat, warm_feat),
+        warm_items=warm_ids,
+        cold_items=cold_ids,
+        item_meta=item_meta,
+    )
+
+    if needs_val:
+        warm_inter = interactions.loc[interactions[C.Item].isin(warm_ids.tolist())]
+        sub = pseudo_cold_split(Dataset(warm_inter), holdout, seed)
+        val_ids = np.asarray(pd.unique(sub.val[C.Item])) if len(sub.val) else np.asarray([])
+        if len(val_ids):
+            carved_warm_feat = content.subset(sub.warm_items)
+            val_feat = content.subset(val_ids)
+            # narrow warm to sub.warm_items (exclude carved val-cold); cold_feat/cold_items
+            # stay unchanged — the real cold items remain the prediction target
+            inputs.donor_scores = _scores_for(donor_scores, sub.warm_items)
+            inputs.warm_features = carved_warm_feat
+            inputs.warm_items = sub.warm_items
+            inputs.similarity = content_similarity(cold_feat, carved_warm_feat)
+            inputs.val_cold_features = val_feat
+            inputs.val_similarity = content_similarity(val_feat, carved_warm_feat)
+            inputs.val_interactions = sub.val
+        else:
+            warnings.warn(
+                "needs_val=True, but the internal holdout produced no val-cold items "
+                "(dataset too small or min_item_interactions too high); the winner is "
+                "refit without a val fold and may degrade.",
+                stacklevel=2,
+            )
+    return inputs

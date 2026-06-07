@@ -2,11 +2,19 @@
 
 from __future__ import annotations
 
+import numpy as np
+import pandas as pd
+
+from warmtransfer.columns import Columns as C
+from warmtransfer.holdout import HoldoutConfig, pseudo_cold_split
 from warmtransfer.recommend import (
     EMBEDDING_METHODS,
     available_inputs_for,
+    build_holdout_inputs,
+    build_production_inputs,
     feasible_methods,
 )
+from warmtransfer.types import Dataset, ItemFeatures
 
 
 def test_scores_plus_content_runs_transfer_and_baselines() -> None:
@@ -57,3 +65,58 @@ def test_content_implies_similarity() -> None:
     # similarity-dependent transfer methods become feasible without an explicit similarity input
     run, _ = feasible_methods(present, requested=None)
     assert "knn_score_avg" in run and "attention_knn" in run
+
+
+def _content(n_items: int = 20) -> ItemFeatures:
+    rng = np.random.default_rng(1)
+    return ItemFeatures(
+        item_ids=np.arange(n_items),
+        matrix=rng.random((n_items, 4)),
+        feature_names=[f"f{i}" for i in range(4)],
+    )
+
+
+def _interactions(n_users: int = 30, n_items: int = 20) -> pd.DataFrame:
+    rng = np.random.default_rng(2)
+    rows = []
+    for it in range(n_items):
+        for u in rng.choice(n_users, size=3 + it % 5, replace=False):
+            rows.append((int(u), it))
+    return pd.DataFrame(rows, columns=[C.User, C.Item])
+
+
+def test_build_holdout_inputs_strips_cold_scores() -> None:
+    inter = _interactions()
+    content = _content()
+    pairs = inter[[C.User, C.Item]].drop_duplicates()
+    donor = pairs.assign(**{C.Score: 1.0})
+    split = pseudo_cold_split(Dataset(inter), HoldoutConfig(min_item_interactions=3), seed=5)
+
+    inputs = build_holdout_inputs(split, content, donor, item_meta=None)
+    assert set(inputs.donor_scores[C.Item]) & set(split.cold_items) == set()
+    assert set(inputs.warm_features.item_ids) == set(split.warm_items)
+    assert set(inputs.cold_features.item_ids) == set(split.cold_items)
+    assert inputs.similarity.shape == (len(split.cold_items), len(split.warm_items))
+    assert inputs.val_interactions is not None
+    assert inputs.val_similarity is not None
+    assert inputs.val_similarity.shape == (len(np.unique(split.val[C.Item])), len(split.warm_items))
+
+
+def test_build_production_inputs_val_alignment() -> None:
+    inter = _interactions()
+    content = _content()
+    pairs = inter[[C.User, C.Item]].drop_duplicates()
+    donor = pairs.assign(**{C.Score: 1.0})
+    cold = np.array([0, 1])  # real cold items (present in content)
+    inputs = build_production_inputs(
+        inter, content, donor, cold, item_meta=None,
+        needs_val=True, holdout=HoldoutConfig(min_item_interactions=3), seed=5,
+    )
+    n_warm = inputs.warm_features.n_items
+    # all similarity matrices aligned to the SAME warm set
+    assert inputs.similarity.shape == (len(cold), n_warm)
+    if inputs.val_similarity is not None:
+        assert inputs.val_similarity.shape[1] == n_warm
+    # production donor scores exclude carved val-cold items
+    donor_items = set(inputs.donor_scores[C.Item])
+    assert donor_items & set(inputs.warm_items) == donor_items
