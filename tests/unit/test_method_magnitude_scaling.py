@@ -5,10 +5,10 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from coldscore.columns import Columns as C
-from coldscore.methods.linmap_emb import LinMapEmbedding
-from coldscore.methods.magnitude_scaling import MagnitudeScaling
-from coldscore.types import ItemFeatures, TransferInputs
+from warmtransfer.columns import Columns as C
+from warmtransfer.methods.linmap_emb import LinMapEmbedding
+from warmtransfer.methods.magnitude_scaling import MagnitudeScaling
+from warmtransfer.types import ItemFeatures, TransferInputs
 
 
 def _feats(ids: list[int], rows: list[list[float]]) -> ItemFeatures:

@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from coldscore.columns import Columns as C
-from coldscore.types import Dataset, ItemFeatures
+from warmtransfer.columns import Columns as C
+from warmtransfer.types import Dataset, ItemFeatures
 
 
 @pytest.fixture

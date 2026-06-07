@@ -5,8 +5,8 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from coldscore.columns import Columns as C
-from coldscore.metrics import calc_metrics, mean_user_auc, ranking_metrics
+from warmtransfer.columns import Columns as C
+from warmtransfer.metrics import calc_metrics, mean_user_auc, ranking_metrics
 
 
 def _grid() -> tuple[pd.DataFrame, pd.DataFrame]:

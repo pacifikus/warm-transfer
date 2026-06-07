@@ -7,8 +7,8 @@ from typing import cast
 import numpy as np
 import pandas as pd
 
-from coldbench.datasets.goodbooks import _books_to_features
-from coldscore.types import ItemFeatures
+from warmtransfer.bench.datasets.goodbooks import _books_to_features
+from warmtransfer.types import ItemFeatures
 
 
 def _synthetic_books() -> pd.DataFrame:

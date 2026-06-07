@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from coldscore.exceptions import RegistryError
-from coldscore.registry import Registry
+from warmtransfer.exceptions import RegistryError
+from warmtransfer.registry import Registry
 
 
 def test_register_and_get() -> None:

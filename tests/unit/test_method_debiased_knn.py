@@ -5,9 +5,9 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from coldscore.columns import Columns as C
-from coldscore.methods.debiased_knn import DebiasedKNN
-from coldscore.types import ItemFeatures, TransferInputs
+from warmtransfer.columns import Columns as C
+from warmtransfer.methods.debiased_knn import DebiasedKNN
+from warmtransfer.types import ItemFeatures, TransferInputs
 
 
 def _inputs() -> TransferInputs:
@@ -64,7 +64,7 @@ def test_deterministic() -> None:
 def test_popular_neighbor_contribution_reduced() -> None:
     """Дебиасинг снижает вклад глобально популярного соседа относительно наивного KNN."""
     inp = _inputs()
-    from coldscore.methods.knn import KNNScoreAggregation
+    from warmtransfer.methods.knn import KNNScoreAggregation
 
     users = np.array([1, 2, 3])
     cold = np.array([20])

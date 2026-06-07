@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from coldscore.columns import Columns as C
-from coldscore.types import ItemFeatures, TransferInputs
+from warmtransfer.columns import Columns as C
+from warmtransfer.types import ItemFeatures, TransferInputs
 
 pytestmark = pytest.mark.bench  # требует torch (extra deep)
 
@@ -45,7 +45,7 @@ def _inputs() -> TransferInputs:
 
 
 def test_dropoutnet_learns_content_to_latent() -> None:
-    from coldscore.methods.dropoutnet import DropoutNet
+    from warmtransfer.methods.dropoutnet import DropoutNet
 
     m = DropoutNet(hidden=16, epochs=300, dropout_pref=0.5).fit(_inputs(), seed=0)
     reco = m.predict(np.array([1, 2]), np.array([30, 31]))
@@ -58,7 +58,7 @@ def test_dropoutnet_learns_content_to_latent() -> None:
 
 
 def test_dropoutnet_params() -> None:
-    from coldscore.methods.dropoutnet import DropoutNet
+    from warmtransfer.methods.dropoutnet import DropoutNet
 
     p = DropoutNet(hidden=32, epochs=10).get_params()
     assert p["hidden"] == 32 and p["epochs"] == 10

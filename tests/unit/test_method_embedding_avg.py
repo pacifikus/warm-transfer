@@ -5,10 +5,10 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from coldscore.columns import Columns as C
-from coldscore.methods import methods
-from coldscore.methods.embedding_avg import EmbeddingAverage
-from coldscore.types import ItemFeatures, TransferInputs
+from warmtransfer.columns import Columns as C
+from warmtransfer.methods import methods
+from warmtransfer.methods.embedding_avg import EmbeddingAverage
+from warmtransfer.types import ItemFeatures, TransferInputs
 
 
 def _inputs() -> TransferInputs:

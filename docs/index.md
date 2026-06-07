@@ -1,4 +1,4 @@
-# coldscore + coldbench
+# warm-transfer
 
 **Model-agnostic plug&play библиотека** для переноса и калибровки скоров уже обученной
 рекомендательной модели на **новые (cold-start) айтемы** при экстремальной разреженности,
@@ -23,9 +23,9 @@ Grouped MP** на полной матрице **3 домена × 3 донора
 
 ## Архитектура
 
-- **`coldscore`** — лёгкое ядро (plug&play): методы переноса, метрики, similarity.
+- **`warmtransfer`** — лёгкое ядро (plug&play): методы переноса, метрики, similarity.
   Работает со скорами донора + контентом, ставится без тяжёлых recsys-зависимостей.
-- **`coldbench`** — бенчмарк (extra `bench`): датасеты, честный сплиттер, доноры
+- **`warmtransfer.bench`** — бенчмарк (extra `bench`): датасеты, честный сплиттер, доноры
   (ALS/BPR/CatBoost), runner.
 
 ## Быстрый старт (ядро)
@@ -34,9 +34,9 @@ Grouped MP** на полной матрице **3 домена × 3 донора
 import numpy as np
 import pandas as pd
 
-from coldscore.columns import Columns as C
-from coldscore.methods import LinMap
-from coldscore.types import ItemFeatures, TransferInputs
+from warmtransfer.columns import Columns as C
+from warmtransfer.methods import LinMap
+from warmtransfer.types import ItemFeatures, TransferInputs
 
 warm_features = ItemFeatures(
     item_ids=np.array([10, 11]),
@@ -81,9 +81,9 @@ uv sync --extra all     # + deep (torch)
 
 ```bash
 uv run python examples/quickstart.py
-uv run coldbench --list-components
-uv run coldbench --config configs/example.yaml --dry-run
-uv run coldbench --config configs/example.yaml
+uv run warmbench --list-components
+uv run warmbench --config configs/example.yaml --dry-run
+uv run warmbench --config configs/example.yaml
 ```
 
 См. [Методы](methods.md), [Датасеты](datasets.md), [Протокол оценки](eval-protocol.md),

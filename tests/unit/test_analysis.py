@@ -5,9 +5,9 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from coldbench.analysis import recall_by_popularity_bucket
-from coldbench.results import add_rela_impr, to_table
-from coldscore.columns import Columns as C
+from warmtransfer.bench.analysis import recall_by_popularity_bucket
+from warmtransfer.bench.results import add_rela_impr, to_table
+from warmtransfer.columns import Columns as C
 
 
 def test_recall_by_popularity_bucket() -> None:

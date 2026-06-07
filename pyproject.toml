@@ -1,5 +1,5 @@
 [project]
-name = "coldscore"
+name = "warm-transfer"
 version = "0.1.0"
 description = "Model-agnostic plug&play библиотека для трансфера и калибровки скоров рекомендательной модели на cold-start айтемы"
 readme = "README.md"
@@ -34,7 +34,7 @@ bench = [
     "psutil>=5.9",         # замер latency / RSS
     "requests>=2.31",      # скачивание датасетов
 ]
-all = ["coldscore[deep,bench]"]
+all = ["warm-transfer[deep,bench]"]
 
 [dependency-groups]
 dev = [
@@ -54,10 +54,10 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/coldscore", "src/coldbench"]
+packages = ["src/warmtransfer"]
 
 [project.scripts]
-coldbench = "coldbench.__main__:main"
+warmbench = "warmtransfer.bench.__main__:main"
 
 [tool.ruff]
 line-length = 100

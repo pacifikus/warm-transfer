@@ -1,4 +1,4 @@
-"""Минимальный plug&play пример coldscore без coldbench.
+"""Минимальный plug&play пример warmtransfer без warmtransfer.bench.
 
 Пользователь приносит warm-скоры уже обученного донора и контент warm/cold айтемов.
 LinMap учит отображение "контент -> вектор скоров по пользователям" и предсказывает
@@ -10,9 +10,9 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from coldscore.columns import Columns as C
-from coldscore.methods import LinMap
-from coldscore.types import ItemFeatures, TransferInputs
+from warmtransfer.columns import Columns as C
+from warmtransfer.methods import LinMap
+from warmtransfer.types import ItemFeatures, TransferInputs
 
 warm_features = ItemFeatures(
     item_ids=np.array([10, 11]),

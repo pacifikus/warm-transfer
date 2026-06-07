@@ -5,7 +5,7 @@ from __future__ import annotations
 from hypothesis import given
 from hypothesis import strategies as st
 
-from coldscore.metrics.ranking import ndcg_at_k, precision_at_k, recall_at_k
+from warmtransfer.metrics.ranking import ndcg_at_k, precision_at_k, recall_at_k
 
 # списки уникальных item_id и подмножество релевантных
 items_strategy = st.lists(

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pandas as pd
 
-from coldscore.columns import Columns as C
-from coldscore.types import TransferInputs
+from warmtransfer.columns import Columns as C
+from warmtransfer.types import TransferInputs
 
 
 def test_transfer_inputs_train_interactions_optional_for_score_only_methods() -> None:

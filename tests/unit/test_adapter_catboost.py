@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from coldbench.adapters.catboost_adapter import CatBoostAdapter
-from coldscore.columns import Columns as C
-from coldscore.types import Dataset
+from warmtransfer.bench.adapters.catboost_adapter import CatBoostAdapter
+from warmtransfer.columns import Columns as C
+from warmtransfer.types import Dataset
 
 pytestmark = pytest.mark.bench
 

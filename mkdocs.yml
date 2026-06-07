@@ -1,4 +1,4 @@
-site_name: coldscore + coldbench
+site_name: warm-transfer
 site_description: Model-agnostic библиотека переноса скоров на cold-start айтемы + бенчмарк
 docs_dir: docs
 

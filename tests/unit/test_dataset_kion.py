@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from coldbench.datasets.kion import _items_to_features, _split_list
+from warmtransfer.bench.datasets.kion import _items_to_features, _split_list
 
 
 def test_split_list_normalizes() -> None:
