@@ -82,7 +82,7 @@ def _interactions(n_users: int = 30, n_items: int = 20) -> pd.DataFrame:
     for it in range(n_items):
         for u in rng.choice(n_users, size=3 + it % 5, replace=False):
             rows.append((int(u), it))
-    return pd.DataFrame(rows, columns=[C.User, C.Item])
+    return pd.DataFrame(rows, columns=[C.User, C.Item])  # type: ignore[arg-type]
 
 
 def test_build_holdout_inputs_strips_cold_scores() -> None:
@@ -94,6 +94,9 @@ def test_build_holdout_inputs_strips_cold_scores() -> None:
 
     inputs = build_holdout_inputs(split, content, donor, item_meta=None)
     assert set(inputs.donor_scores[C.Item]) & set(split.cold_items) == set()
+    assert inputs.warm_features is not None
+    assert inputs.cold_features is not None
+    assert inputs.similarity is not None
     assert set(inputs.warm_features.item_ids) == set(split.warm_items)
     assert set(inputs.cold_features.item_ids) == set(split.cold_items)
     assert inputs.similarity.shape == (len(split.cold_items), len(split.warm_items))
@@ -112,6 +115,9 @@ def test_build_production_inputs_val_alignment() -> None:
         inter, content, donor, cold, item_meta=None,
         needs_val=True, holdout=HoldoutConfig(min_item_interactions=3), seed=5,
     )
+    assert inputs.warm_features is not None
+    assert inputs.similarity is not None
+    assert inputs.warm_items is not None
     n_warm = inputs.warm_features.n_items
     # all similarity matrices aligned to the SAME warm set
     assert inputs.similarity.shape == (len(cold), n_warm)

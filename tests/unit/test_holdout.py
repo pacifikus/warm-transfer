@@ -17,7 +17,7 @@ def _toy_dataset(n_users: int = 30, n_items: int = 20, seed: int = 0) -> Dataset
         # popularity grows with item id so qcut buckets are non-degenerate
         for u in rng.choice(n_users, size=2 + it % 5, replace=False):
             rows.append((int(u), it))
-    df = pd.DataFrame(rows, columns=[C.User, C.Item])
+    df = pd.DataFrame(rows, columns=[C.User, C.Item])  # type: ignore[arg-type]
     return Dataset(interactions=df, name="toy")
 
 
