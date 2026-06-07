@@ -4,7 +4,7 @@
 
 ## Контракты и типы
 
-::: coldscore.types
+::: warmtransfer.types
     options:
       members: [ItemFeatures, Dataset, SplitResult, TransferInputs]
       show_root_heading: true
@@ -12,79 +12,79 @@
 
 ## Базовый метод
 
-::: coldscore.methods.base.ColdStartMethod
+::: warmtransfer.methods.base.ColdStartMethod
     options:
       show_root_heading: true
       heading_level: 3
 
 ## Cold-start методы
 
-::: coldscore.methods.linmap.LinMap
+::: warmtransfer.methods.linmap.LinMap
     options: { show_root_heading: true, heading_level: 3 }
 
-::: coldscore.methods.stacking_plus.StackingPlus
+::: warmtransfer.methods.stacking_plus.StackingPlus
     options: { show_root_heading: true, heading_level: 3 }
 
-::: coldscore.methods.stacking.StackingTransfer
+::: warmtransfer.methods.stacking.StackingTransfer
     options: { show_root_heading: true, heading_level: 3 }
 
-::: coldscore.methods.baselines.GroupedMostPopularPersonalized
+::: warmtransfer.methods.baselines.GroupedMostPopularPersonalized
     options: { show_root_heading: true, heading_level: 3 }
 
-::: coldscore.methods.baselines.GroupedMostPopular
+::: warmtransfer.methods.baselines.GroupedMostPopular
     options: { show_root_heading: true, heading_level: 3 }
 
-::: coldscore.methods.knn.KNNScoreAggregation
+::: warmtransfer.methods.knn.KNNScoreAggregation
     options: { show_root_heading: true, heading_level: 3 }
 
-::: coldscore.methods.attention_knn.AttentionKNN
+::: warmtransfer.methods.attention_knn.AttentionKNN
     options: { show_root_heading: true, heading_level: 3 }
 
-::: coldscore.methods.debiased_knn.DebiasedKNN
+::: warmtransfer.methods.debiased_knn.DebiasedKNN
     options: { show_root_heading: true, heading_level: 3 }
 
-::: coldscore.methods.logreg_calib.LogRegCalibration
+::: warmtransfer.methods.logreg_calib.LogRegCalibration
     options: { show_root_heading: true, heading_level: 3 }
 
-::: coldscore.methods.scale_shift.ScaleShift
+::: warmtransfer.methods.scale_shift.ScaleShift
     options: { show_root_heading: true, heading_level: 3 }
 
-::: coldscore.methods.linmap_emb.LinMapEmbedding
+::: warmtransfer.methods.linmap_emb.LinMapEmbedding
     options: { show_root_heading: true, heading_level: 3 }
 
-::: coldscore.methods.embedding_avg.EmbeddingAverage
+::: warmtransfer.methods.embedding_avg.EmbeddingAverage
     options: { show_root_heading: true, heading_level: 3 }
 
-::: coldscore.methods.attention_emb.AttentionEmbedding
+::: warmtransfer.methods.attention_emb.AttentionEmbedding
     options: { show_root_heading: true, heading_level: 3 }
 
-::: coldscore.methods.magnitude_scaling.MagnitudeScaling
+::: warmtransfer.methods.magnitude_scaling.MagnitudeScaling
     options: { show_root_heading: true, heading_level: 3 }
 
-::: coldscore.methods.dropoutnet.DropoutNet
+::: warmtransfer.methods.dropoutnet.DropoutNet
     options: { show_root_heading: true, heading_level: 3 }
 
 ## Конфиг и результаты
 
-::: coldbench.config.BenchConfig
+::: warmtransfer.bench.config.BenchConfig
     options: { show_root_heading: true, heading_level: 3 }
 
-::: coldbench.results
+::: warmtransfer.bench.results
     options:
       show_root_heading: true
       heading_level: 3
 
 ## Метрики
 
-::: coldscore.metrics
+::: warmtransfer.metrics
     options:
       show_root_heading: true
       heading_level: 3
 
 ## Бенчмарк
 
-::: coldbench.runner.BenchmarkRunner
+::: warmtransfer.bench.runner.BenchmarkRunner
     options: { show_root_heading: true, heading_level: 3 }
 
-::: coldbench.splitters.pseudo_cold.PseudoColdSplitter
+::: warmtransfer.bench.splitters.pseudo_cold.PseudoColdSplitter
     options: { show_root_heading: true, heading_level: 3 }

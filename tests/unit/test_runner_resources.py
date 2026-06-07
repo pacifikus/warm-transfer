@@ -7,14 +7,14 @@ from typing import cast
 import numpy as np
 import pandas as pd
 
-from coldbench.adapters.base import ModelAdapter, register_adapter
-from coldbench.config import BenchConfig, ComponentCfg, SplitterCfg
-from coldbench.datasets.base import DatasetLoader, register_dataset
-from coldbench.runner import BenchmarkRunner
-from coldbench.splitters.base import Splitter, register_splitter
-from coldscore.columns import Columns as C
-from coldscore.methods.base import ColdStartMethod, cross_join_frame, register_method
-from coldscore.types import Dataset, ItemFeatures, SplitResult, TransferInputs
+from warmtransfer.bench.adapters.base import ModelAdapter, register_adapter
+from warmtransfer.bench.config import BenchConfig, ComponentCfg, SplitterCfg
+from warmtransfer.bench.datasets.base import DatasetLoader, register_dataset
+from warmtransfer.bench.runner import BenchmarkRunner
+from warmtransfer.bench.splitters.base import Splitter, register_splitter
+from warmtransfer.columns import Columns as C
+from warmtransfer.methods.base import ColdStartMethod, cross_join_frame, register_method
+from warmtransfer.types import Dataset, ItemFeatures, SplitResult, TransferInputs
 
 
 def _features() -> ItemFeatures:

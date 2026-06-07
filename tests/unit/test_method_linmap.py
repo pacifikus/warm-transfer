@@ -5,9 +5,9 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from coldscore.columns import Columns as C
-from coldscore.methods.linmap import LinMap
-from coldscore.types import ItemFeatures, TransferInputs
+from warmtransfer.columns import Columns as C
+from warmtransfer.methods.linmap import LinMap
+from warmtransfer.types import ItemFeatures, TransferInputs
 
 
 def _inputs() -> TransferInputs:

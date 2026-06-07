@@ -9,9 +9,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from coldbench.splitters.pseudo_cold import PseudoColdSplitter
-from coldscore.columns import Columns as C
-from coldscore.types import Dataset
+from warmtransfer.bench.splitters.pseudo_cold import PseudoColdSplitter
+from warmtransfer.columns import Columns as C
+from warmtransfer.types import Dataset
 
 
 @pytest.fixture

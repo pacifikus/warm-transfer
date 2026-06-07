@@ -201,94 +201,6 @@ wheels = [
 ]
 
 [[package]]
-name = "coldscore"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13'" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13'" },
-    { name = "pandas" },
-    { name = "pydantic" },
-    { name = "scikit-learn" },
-    { name = "scipy" },
-]
-
-[package.optional-dependencies]
-all = [
-    { name = "catboost" },
-    { name = "implicit" },
-    { name = "psutil" },
-    { name = "pyarrow" },
-    { name = "pyyaml" },
-    { name = "rectools" },
-    { name = "requests" },
-    { name = "tabulate" },
-    { name = "torch" },
-    { name = "tqdm" },
-]
-bench = [
-    { name = "catboost" },
-    { name = "implicit" },
-    { name = "psutil" },
-    { name = "pyarrow" },
-    { name = "pyyaml" },
-    { name = "rectools" },
-    { name = "requests" },
-    { name = "tabulate" },
-    { name = "tqdm" },
-]
-deep = [
-    { name = "torch" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "hypothesis" },
-    { name = "pyright" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-]
-docs = [
-    { name = "mkdocs-material" },
-    { name = "mkdocstrings", extra = ["python"] },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "catboost", marker = "extra == 'bench'", specifier = ">=1.2" },
-    { name = "coldscore", extras = ["deep", "bench"], marker = "extra == 'all'" },
-    { name = "implicit", marker = "extra == 'bench'", specifier = ">=0.7" },
-    { name = "numpy", specifier = ">=1.26" },
-    { name = "pandas", specifier = ">=2.1" },
-    { name = "psutil", marker = "extra == 'bench'", specifier = ">=5.9" },
-    { name = "pyarrow", marker = "extra == 'bench'", specifier = ">=15" },
-    { name = "pydantic", specifier = ">=2.6" },
-    { name = "pyyaml", marker = "extra == 'bench'", specifier = ">=6.0" },
-    { name = "rectools", marker = "extra == 'bench'", specifier = ">=0.13" },
-    { name = "requests", marker = "extra == 'bench'", specifier = ">=2.31" },
-    { name = "scikit-learn", specifier = ">=1.4" },
-    { name = "scipy", specifier = ">=1.11" },
-    { name = "tabulate", marker = "extra == 'bench'", specifier = ">=0.9" },
-    { name = "torch", marker = "extra == 'deep'", specifier = ">=2.2" },
-    { name = "tqdm", marker = "extra == 'bench'", specifier = ">=4.66" },
-]
-provides-extras = ["deep", "bench", "all"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "hypothesis", specifier = ">=6.0" },
-    { name = "pyright", specifier = ">=1.1.390" },
-    { name = "pytest", specifier = ">=8.0" },
-    { name = "pytest-cov", specifier = ">=5.0" },
-    { name = "ruff", specifier = ">=0.6" },
-]
-docs = [
-    { name = "mkdocs-material", specifier = ">=9.5" },
-    { name = "mkdocstrings", extras = ["python"], specifier = ">=0.26" },
-]
-
-[[package]]
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -2478,6 +2390,94 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/53/0c/06f8b233b8fd13b9e5ee11424ef85419ba0d8ba0b3138bf360be2ff56953/urllib3-2.7.0.tar.gz", hash = "sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c", size = 433602, upload-time = "2026-05-07T16:13:18.596Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7f/3e/5db95bcf282c52709639744ca2a8b149baccf648e39c8cc87553df9eae0c/urllib3-2.7.0-py3-none-any.whl", hash = "sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897", size = 131087, upload-time = "2026-05-07T16:13:17.151Z" },
+]
+
+[[package]]
+name = "warm-transfer"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13'" },
+    { name = "pandas" },
+    { name = "pydantic" },
+    { name = "scikit-learn" },
+    { name = "scipy" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "catboost" },
+    { name = "implicit" },
+    { name = "psutil" },
+    { name = "pyarrow" },
+    { name = "pyyaml" },
+    { name = "rectools" },
+    { name = "requests" },
+    { name = "tabulate" },
+    { name = "torch" },
+    { name = "tqdm" },
+]
+bench = [
+    { name = "catboost" },
+    { name = "implicit" },
+    { name = "psutil" },
+    { name = "pyarrow" },
+    { name = "pyyaml" },
+    { name = "rectools" },
+    { name = "requests" },
+    { name = "tabulate" },
+    { name = "tqdm" },
+]
+deep = [
+    { name = "torch" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "hypothesis" },
+    { name = "pyright" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+docs = [
+    { name = "mkdocs-material" },
+    { name = "mkdocstrings", extra = ["python"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "catboost", marker = "extra == 'bench'", specifier = ">=1.2" },
+    { name = "implicit", marker = "extra == 'bench'", specifier = ">=0.7" },
+    { name = "numpy", specifier = ">=1.26" },
+    { name = "pandas", specifier = ">=2.1" },
+    { name = "psutil", marker = "extra == 'bench'", specifier = ">=5.9" },
+    { name = "pyarrow", marker = "extra == 'bench'", specifier = ">=15" },
+    { name = "pydantic", specifier = ">=2.6" },
+    { name = "pyyaml", marker = "extra == 'bench'", specifier = ">=6.0" },
+    { name = "rectools", marker = "extra == 'bench'", specifier = ">=0.13" },
+    { name = "requests", marker = "extra == 'bench'", specifier = ">=2.31" },
+    { name = "scikit-learn", specifier = ">=1.4" },
+    { name = "scipy", specifier = ">=1.11" },
+    { name = "tabulate", marker = "extra == 'bench'", specifier = ">=0.9" },
+    { name = "torch", marker = "extra == 'deep'", specifier = ">=2.2" },
+    { name = "tqdm", marker = "extra == 'bench'", specifier = ">=4.66" },
+    { name = "warm-transfer", extras = ["deep", "bench"], marker = "extra == 'all'" },
+]
+provides-extras = ["deep", "bench", "all"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "hypothesis", specifier = ">=6.0" },
+    { name = "pyright", specifier = ">=1.1.390" },
+    { name = "pytest", specifier = ">=8.0" },
+    { name = "pytest-cov", specifier = ">=5.0" },
+    { name = "ruff", specifier = ">=0.6" },
+]
+docs = [
+    { name = "mkdocs-material", specifier = ">=9.5" },
+    { name = "mkdocstrings", extras = ["python"], specifier = ">=0.26" },
 ]
 
 [[package]]

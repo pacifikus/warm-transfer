@@ -1,4 +1,4 @@
-# coldscore + coldbench
+# warm-transfer
 
 **Model-agnostic plug&play библиотека** для трансфера и калибровки скоров уже обученной
 рекомендательной модели на **новые (cold-start) айтемы** в условиях экстремальной
@@ -10,12 +10,12 @@
 
 ## Структура
 
-- **`coldscore`** — лёгкое ядро (plug&play). Работает со скорами донора + контентом.
+- **`warmtransfer`** — лёгкое ядро (plug&play). Работает со скорами донора + контентом.
   Ставится без тяжёлых recsys-зависимостей.
   - `methods/` — cold-start методы (бейзлайны, KNN, LinMap, Stacking, scale&shift, attention-KNN…)
   - `metrics/` — собственные корректные метрики (Recall/Precision/MAP/NDCG@k, MRR, AUC, RelaImpr)
   - `similarity/` — контентное сходство cold→warm (опционально)
-- **`coldbench`** — бенчмарк (тяжёлые зависимости, extra `bench`).
+- **`warmtransfer.bench`** — бенчмарк (тяжёлые зависимости, extra `bench`).
   - `datasets/` — загрузчики (ML-1M/20M, Goodbooks, KION, KION-text)
   - `splitters/` — честный pseudo-cold сплит (анти-утечка)
   - `adapters/` — модели-доноры (ALS, BPR, CatBoost)
@@ -37,9 +37,9 @@ DropoutNet (deep [EMB]) даёт лучший ranking на плотном ML-1M.
 import numpy as np
 import pandas as pd
 
-from coldscore.columns import Columns as C
-from coldscore.methods import LinMap
-from coldscore.types import ItemFeatures, TransferInputs
+from warmtransfer.columns import Columns as C
+from warmtransfer.methods import LinMap
+from warmtransfer.types import ItemFeatures, TransferInputs
 
 warm_features = ItemFeatures(
     item_ids=np.array([10, 11]),
@@ -86,9 +86,9 @@ uv sync --extra all     # + deep (torch)
 ```bash
 uv run pytest -q                          # тесты ядра
 uv run python examples/quickstart.py      # минимальный plug&play пример
-uv run coldbench --list-components        # доступные datasets/donors/methods
-uv run coldbench --config configs/example.yaml --dry-run
-uv run coldbench --config configs/example.yaml  # пример прогона бенчмарка
+uv run warmbench --list-components        # доступные datasets/donors/methods
+uv run warmbench --config configs/example.yaml --dry-run
+uv run warmbench --config configs/example.yaml  # пример прогона бенчмарка
 ```
 
 ## Документация

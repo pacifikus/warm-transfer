@@ -15,14 +15,14 @@ from typing import cast
 import numpy as np
 import pandas as pd
 
-from coldbench.adapters.als import ALSAdapter
-from coldbench.analysis import recall_by_popularity_bucket
-from coldbench.datasets import datasets
-from coldbench.splitters.pseudo_cold import PseudoColdSplitter
-from coldscore.columns import Columns as C
-from coldscore.methods import methods
-from coldscore.similarity import content_similarity
-from coldscore.types import Dataset, TransferInputs
+from warmtransfer.bench.adapters.als import ALSAdapter
+from warmtransfer.bench.analysis import recall_by_popularity_bucket
+from warmtransfer.bench.datasets import datasets
+from warmtransfer.bench.splitters.pseudo_cold import PseudoColdSplitter
+from warmtransfer.columns import Columns as C
+from warmtransfer.methods import methods
+from warmtransfer.similarity import content_similarity
+from warmtransfer.types import Dataset, TransferInputs
 
 METHODS = ["grouped_most_popular_pers", "linmap", "stacking_plus"]
 SEED = 42

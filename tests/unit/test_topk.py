@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from coldscore.columns import Columns as C
-from coldscore.metrics._topk import rank_items, ranked_lists, relevant_sets
+from warmtransfer.columns import Columns as C
+from warmtransfer.metrics._topk import rank_items, ranked_lists, relevant_sets
 
 
 def test_rank_items_orders_by_score_desc() -> None:

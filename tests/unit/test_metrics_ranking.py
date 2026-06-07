@@ -9,7 +9,7 @@ import math
 
 import pytest
 
-from coldscore.metrics.ranking import (
+from warmtransfer.metrics.ranking import (
     average_precision_at_k,
     ndcg_at_k,
     precision_at_k,

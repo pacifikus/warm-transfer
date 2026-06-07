@@ -8,8 +8,8 @@ import numpy as np
 import pytest
 from sklearn.metrics import roc_auc_score
 
-from coldscore.metrics.classification import auc
-from coldscore.metrics.relative import rela_impr
+from warmtransfer.metrics.classification import auc
+from warmtransfer.metrics.relative import rela_impr
 
 
 def test_auc_known_answer() -> None:

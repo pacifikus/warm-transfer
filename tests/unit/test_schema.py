@@ -5,9 +5,9 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from coldscore.columns import Columns as C
-from coldscore.exceptions import SchemaError
-from coldscore.schema import validate_interactions, validate_scores
+from warmtransfer.columns import Columns as C
+from warmtransfer.exceptions import SchemaError
+from warmtransfer.schema import validate_interactions, validate_scores
 
 
 def test_validate_interactions_adds_weight() -> None:

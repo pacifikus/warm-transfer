@@ -21,7 +21,7 @@ docs/results/results.md
 *.zip
 
 # кэш датасетов/скоров
-.coldbench/
+.warmtransfer/
 
 # IDE / OS
 .DS_Store

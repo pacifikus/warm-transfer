@@ -1,10 +1,10 @@
-"""Тесты CLI coldbench без запуска тяжёлого бенчмарка."""
+"""Тесты CLI warmtransfer.bench без запуска тяжёлого бенчмарка."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from coldbench.__main__ import main
+from warmtransfer.bench.__main__ import main
 
 
 def test_cli_list_components(capsys) -> None:
