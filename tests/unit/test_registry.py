@@ -1,4 +1,4 @@
-"""Тесты реестра компонентов."""
+"""Tests for the component registry."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ def test_duplicate_name_raises() -> None:
     @reg.register("foo")
     class Foo: ...
 
-    with pytest.raises(RegistryError, match="уже зарегистрирован"):
+    with pytest.raises(RegistryError, match="already registered"):
 
         @reg.register("foo")
         class Bar: ...
@@ -34,5 +34,5 @@ def test_duplicate_name_raises() -> None:
 
 def test_unknown_name_raises() -> None:
     reg: Registry[type] = Registry("thing")
-    with pytest.raises(RegistryError, match="Неизвестный thing"):
+    with pytest.raises(RegistryError, match="Unknown thing"):
         reg.get("missing")

@@ -1,8 +1,8 @@
-"""warmtransfer — model-agnostic plug&play трансфер/калибровка скоров на cold-start айтемы.
+"""warmtransfer — model-agnostic plug&play transfer/calibration of scores onto cold-start items.
 
-Публичный API: единые имена колонок, типы данных, базовый интерфейс метода и реестр,
-метрики. Тяжёлые зависимости не требуются — библиотека работает со скорами донора,
-которые приносит пользователь.
+Public API: unified column names, data types, the base method interface and registry,
+metrics. No heavy dependencies are required — the library works with donor scores
+provided by the user.
 """
 
 from __future__ import annotations

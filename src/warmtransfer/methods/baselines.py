@@ -1,7 +1,7 @@
-"""Бейзлайны cold-start: Random, MostPopular, GroupedMostPopular.
+"""Cold-start baselines: Random, MostPopular, GroupedMostPopular.
 
-GroupedMostPopular — сильный бейзлайн (популярность в категории холодного айтема),
-который наивные методы обычно НЕ обходят. Цель проекта — превзойти именно его.
+GroupedMostPopular is a strong baseline (popularity within the cold item's category)
+that naive methods usually do NOT beat. The project's goal is to surpass exactly this one.
 """
 
 from __future__ import annotations
@@ -19,14 +19,14 @@ from warmtransfer.types import TransferInputs
 
 
 def _popularity(train: pd.DataFrame) -> dict[object, float]:
-    """Популярность айтема в train (число взаимодействий)."""
+    """Item popularity in train (number of interactions)."""
     counts = cast("pd.Series", train.groupby(C.Item).size())
     return {k: float(v) for k, v in counts.items()}
 
 
 @register_method("random")
 class RandomScorer(ColdStartMethod):
-    """Случайный скор для каждой пары (user, cold_item). Ожидаемый AUC ≈ 0.5."""
+    """Random score for each (user, cold_item) pair. Expected AUC ≈ 0.5."""
 
     requires = frozenset()
 
@@ -46,10 +46,10 @@ class RandomScorer(ColdStartMethod):
 
 @register_method("most_popular")
 class MostPopular(ColdStartMethod):
-    """Скор айтема = его популярность в train (одинаков для всех пользователей).
+    """Item score = its popularity in train (the same for all users).
 
-    Для истинно cold-айтемов популярность в train нулевая → метод неинформативен
-    (AUC ≈ 0.5). Это честный floor-бейзлайн.
+    For truly cold items the train popularity is zero → the method is uninformative
+    (AUC ≈ 0.5). This is a fair floor baseline.
     """
 
     requires = frozenset({"train_interactions"})
@@ -70,11 +70,11 @@ class MostPopular(ColdStartMethod):
 
 @register_method("grouped_most_popular")
 class GroupedMostPopular(ColdStartMethod):
-    """Популярность в категории (жанре) холодного айтема.
+    """Popularity within the cold item's category (genre).
 
-    Популярность жанра = сумма train-популярностей warm-айтемов этого жанра. Скор
-    cold-айтема = сумма популярностей его жанров. Leak-free: использует только train +
-    статичный контент. Сильный бейзлайн.
+    Genre popularity = sum of train popularities of warm items of that genre. The
+    cold item score = sum of its genres' popularities. Leak-free: uses only train +
+    static content. A strong baseline.
     """
 
     requires = frozenset({"train_interactions", "content"})
@@ -88,12 +88,12 @@ class GroupedMostPopular(ColdStartMethod):
         warm = inputs.warm_features
         cold = inputs.cold_features
         if warm is None or cold is None:
-            raise ValueError("GroupedMostPopular требует warm_features и cold_features")
+            raise ValueError("GroupedMostPopular requires warm_features and cold_features")
 
         pop = _popularity(inputs.train_interactions)
         warm_pop = np.array([pop.get(it, 0.0) for it in warm.item_ids])
         warm_mat = np.asarray(warm.matrix, dtype=float)
-        # популярность жанра g = Σ_i pop[i] * [item i имеет жанр g]
+        # genre g popularity = Σ_i pop[i] * [item i has genre g]
         genre_pop = warm_mat.T @ warm_pop  # [n_genres]
         self._genre_pop = genre_pop
 
@@ -110,11 +110,11 @@ class GroupedMostPopular(ColdStartMethod):
 
 @register_method("grouped_most_popular_pers")
 class GroupedMostPopularPersonalized(ColdStartMethod):
-    """Персонализированный GroupedMP: аффинность пользователя к жанрам cold-айтема.
+    """Personalized GroupedMP: user affinity to the cold item's genres.
 
-    score(u, i) = Σ_g [жанр g у i] · (сколько раз u взаимодействовал с warm-айтемами
-    жанра g в train). Сильный персонализированный бейзлайн — основной target проекта.
-    Leak-free: только train + статичный контент.
+    score(u, i) = Σ_g [item i has genre g] · (how many times u interacted with warm
+    items of genre g in train). A strong personalized baseline — the project's main
+    target. Leak-free: only train + static content.
     """
 
     requires = frozenset({"train_interactions", "content"})
@@ -130,7 +130,7 @@ class GroupedMostPopularPersonalized(ColdStartMethod):
         warm = inputs.warm_features
         cold = inputs.cold_features
         if warm is None or cold is None:
-            raise ValueError("grouped_most_popular_pers требует warm_features и cold_features")
+            raise ValueError("grouped_most_popular_pers requires warm_features and cold_features")
 
         warm_mat = np.asarray(warm.matrix, dtype=float)  # [n_warm, n_genres]
         w_pos = {it: j for j, it in enumerate(warm.item_ids)}
@@ -139,7 +139,7 @@ class GroupedMostPopularPersonalized(ColdStartMethod):
         users = unique_sorted(train[C.User])
         self._u_pos = {u: i for i, u in enumerate(users)}
 
-        # train содержит только warm-айтемы → все элементы есть в w_pos
+        # train contains only warm items → every element is present in w_pos
         rows = map_codes(train[C.User], self._u_pos)
         cols = map_codes(train[C.Item], w_pos)
         counts = np.zeros((len(users), warm_mat.shape[0]))

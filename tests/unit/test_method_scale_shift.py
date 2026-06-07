@@ -1,4 +1,4 @@
-"""Тест scale_shift: контентный KNN над скорами + калибровка к warm-статистикам."""
+"""scale_shift test: content-based KNN over scores + calibration to warm statistics."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ def _feats(ids: list[int], genres: list[int]) -> ItemFeatures:
 
 def _inputs() -> TransferInputs:
     warm = _feats([10, 11, 12, 13], [0, 0, 1, 1])
-    # скоры донора: user1 любит g0-айтемы, user2 — g1-айтемы
+    # donor scores: user1 likes g0 items, user2 likes g1 items
     rows = []
     for u, (s10, s11, s12, s13) in [(1, (5, 4, 1, 0)), (2, (0, 1, 4, 5))]:
         for it, sc in zip([10, 11, 12, 13], [s10, s11, s12, s13], strict=True):
@@ -52,7 +52,7 @@ def test_scale_shift_calibrates_to_warm_scale() -> None:
     m = ScaleShift(k=2)
     m.fit(_inputs(), seed=0)
     reco = m.predict(np.array([1, 2]), np.array([30, 31]))
-    # средний скор cold-выдачи близок к warm-сдвигу mu* (а не к нулю/сырому уровню)
+    # mean cold-output score is close to the warm shift mu* (not zero/raw level)
     assert abs(reco[C.Score].mean() - m._mu_star) < 1.0
 
 

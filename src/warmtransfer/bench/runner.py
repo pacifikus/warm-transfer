@@ -1,7 +1,7 @@
-"""Раннер бенчмарка: датасеты × доноры × методы × сиды → таблица метрик.
+"""Benchmark runner: datasets × donors × methods × seeds → metrics table.
 
-Каждый прогон: честный сплит → обучение донора на warm → скоры донора → построение
-TransferInputs → fit/predict каждого метода на (test_users × cold_items) → метрики.
+Each run: fair split → train donor on warm → donor scores → build TransferInputs →
+fit/predict each method on (test_users × cold_items) → metrics.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import psutil
 
-# импорт методов регистрирует их в реестре
+# importing methods registers them in the registry
 from warmtransfer import methods as _methods_pkg  # noqa: F401
 from warmtransfer._pdutils import unique_sorted
 from warmtransfer.bench.adapters import adapters
@@ -30,7 +30,7 @@ from warmtransfer.types import Dataset, SplitResult, TransferInputs
 
 
 class BenchmarkRunner:
-    """Прогоняет матрицу из ``BenchConfig`` и возвращает записи результатов."""
+    """Runs the matrix from ``BenchConfig`` and returns result records."""
 
     def __init__(self, config: BenchConfig) -> None:
         self.config = config
@@ -50,7 +50,7 @@ class BenchmarkRunner:
         split = splitter.split(ds, seed)
 
         if ds.item_features is None:
-            raise ValueError(f"{dataset_name}: нужен item_features для cold-start методов")
+            raise ValueError(f"{dataset_name}: item_features is required for cold-start methods")
         warm_features = ds.item_features.subset(split.warm_items)
         cold_features = ds.item_features.subset(split.cold_items)
 
@@ -60,7 +60,7 @@ class BenchmarkRunner:
         )
         similarity = content_similarity(cold_features, warm_features)
 
-        # val-cold фолд для супервизорных методов (если задан val_frac > 0)
+        # val-cold fold for supervised methods (if val_frac > 0 is set)
         val_cold_features = None
         val_similarity = None
         val_interactions = None
@@ -81,7 +81,7 @@ class BenchmarkRunner:
             t0 = perf_counter()
             donor_scores = donor.score(test_users, split.warm_items)
             donor_score_seconds = perf_counter() - t0
-            embeddings = donor.embeddings()  # None у доноров без латентного пространства
+            embeddings = donor.embeddings()  # None for donors without a latent space
 
             inputs = TransferInputs(
                 donor_scores=donor_scores,
@@ -105,7 +105,7 @@ class BenchmarkRunner:
                     method_fit_seconds = perf_counter() - t0
                 except MissingInputError as exc:
                     print(
-                        f"[warmbench] пропуск {method_cfg.key} на доноре "
+                        f"[warmbench] skipping {method_cfg.key} on donor "
                         f"{donor_cfg.key}: {exc}"
                     )
                     continue

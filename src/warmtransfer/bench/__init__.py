@@ -1,7 +1,7 @@
-"""warmtransfer.bench — бенчмарк поверх warmtransfer.
+"""warmtransfer.bench — benchmark built on top of warmtransfer.
 
-Тяжёлая часть (датасеты, доноры, runner). Ставится через extra ``bench``:
-``uv sync --extra bench``. Сама библиотека ``warmtransfer`` от него не зависит.
+The heavy part (datasets, donors, runner). Installed via the ``bench`` extra:
+``uv sync --extra bench``. The ``warmtransfer`` library itself does not depend on it.
 """
 
 from __future__ import annotations

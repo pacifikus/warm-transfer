@@ -1,8 +1,8 @@
-"""Линейное отображение контента айтема в его вектор скоров донора (Ridge).
+"""Linear mapping from item content to its donor score vector (Ridge).
 
-Model-agnostic метод: обучаем Ridge-регрессию, которая по контентному вектору warm-айтема
-предсказывает его скоры донора сразу по всем пользователям (multi-output). Для cold-айтема
-применяем ту же регрессию к его контенту и получаем скоры по всем пользователям.
+Model-agnostic method: we train a Ridge regression that, given the content vector of a warm
+item, predicts its donor scores across all users at once (multi-output). For a cold item we
+apply the same regression to its content and obtain scores across all users.
 """
 
 from __future__ import annotations
@@ -19,9 +19,9 @@ from warmtransfer.types import ItemFeatures, TransferInputs
 
 @register_method("linmap")
 class LinMap(ColdStartMethod):
-    """Ridge-отображение контент → вектор скоров донора по всем пользователям.
+    """Ridge mapping content -> donor score vector across all users.
 
-    :param alpha: коэффициент L2-регуляризации Ridge.
+    :param alpha: Ridge L2 regularization coefficient.
     """
 
     requires = frozenset({"donor_scores", "content"})
@@ -32,15 +32,15 @@ class LinMap(ColdStartMethod):
 
     def _fit(self, inputs: TransferInputs, seed: int) -> None:
         if inputs.warm_features is None or inputs.cold_features is None:
-            raise ValueError("linmap требует warm_features и cold_features")
+            raise ValueError("linmap requires warm_features and cold_features")
 
         warm_ids = np.asarray(inputs.warm_features.item_ids)
 
-        # матрица целей S [n_warm, n_users]: строки = warm-айтемы, столбцы = пользователи
+        # target matrix S [n_warm, n_users]: rows = warm items, columns = users
         targets, self._user_ids = _pivot_scores_t(inputs.donor_scores, warm_ids)
         self._user_pos = {u: i for i, u in enumerate(self._user_ids)}
 
-        # признаки warm-айтемов [n_warm, n_feat] (выровнены по warm_ids)
+        # warm item features [n_warm, n_feat] (aligned to warm_ids)
         x = np.asarray(_dense(inputs.warm_features.matrix), dtype=float)
 
         self._model = Ridge(alpha=self.alpha)
@@ -52,15 +52,15 @@ class LinMap(ColdStartMethod):
         user_ids = np.asarray(user_ids)
         cold_item_ids = np.asarray(cold_item_ids)
 
-        # контент запрошенных cold-айтемов [n_cold, n_feat]
+        # content of the requested cold items [n_cold, n_feat]
         x_cold = np.asarray(_dense(self._cold.subset(cold_item_ids).matrix), dtype=float)
-        # предсказание скоров [n_cold, n_users_all]
+        # score prediction [n_cold, n_users_all]
         pred = np.asarray(self._model.predict(x_cold))
 
-        # выбрать столбцы под запрошенных пользователей (неизвестный → нули)
+        # pick columns for the requested users (unknown -> zeros)
         cols = np.array([self._user_pos.get(u, -1) for u in user_ids])
         known = cols >= 0
-        # итог [n_users, n_cold]
+        # result [n_users, n_cold]
         scores = np.zeros((len(user_ids), len(cold_item_ids)))
         scores[known] = pred[:, cols[known]].T
         return cross_join_frame(user_ids, cold_item_ids, scores)
@@ -72,13 +72,13 @@ class LinMap(ColdStartMethod):
 def _pivot_scores_t(
     donor_scores: pd.DataFrame, warm_ids: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Свести скоры донора в матрицу [n_warm, n_users], выровненную по ``warm_ids``."""
+    """Pivot donor scores into a matrix [n_warm, n_users] aligned to ``warm_ids``."""
     w_pos = {it: i for i, it in enumerate(warm_ids)}
     extra = set(unique_sorted(donor_scores[C.Item]).tolist()) - set(w_pos)
     if extra:
         raise ValueError(
-            f"donor_scores содержат не-warm айтемы ({len(extra)} шт.) — нарушение "
-            "warm-only контракта: linmap должен учиться только на warm-скорах"
+            f"donor_scores contain non-warm items ({len(extra)} of them) — violation of "
+            "the warm-only contract: linmap must train only on warm scores"
         )
     user_ids = unique_sorted(donor_scores[C.User])
     u_pos = {u: j for j, u in enumerate(user_ids)}
@@ -91,7 +91,7 @@ def _pivot_scores_t(
 
 
 def _dense(matrix: object) -> np.ndarray:
-    """Привести признаки к плотному ndarray (sparse → toarray)."""
+    """Convert features to a dense ndarray (sparse -> toarray)."""
     todense = getattr(matrix, "toarray", None)
     if callable(todense):
         return np.asarray(todense())

@@ -1,7 +1,7 @@
-"""Интерфейс сплиттера (генерация pseudo-cold) + реестр.
+"""Splitter interface (pseudo-cold generation) + registry.
 
-Сплиттер — главный носитель eval-протокола. Реализации обязаны гарантировать
-инвариант отсутствия утечек (см. ``SplitResult`` и тесты).
+The splitter is the main carrier of the eval protocol. Implementations must
+guarantee the no-leakage invariant (see ``SplitResult`` and the tests).
 """
 
 from __future__ import annotations
@@ -15,19 +15,19 @@ from warmtransfer.types import Dataset, SplitResult
 
 
 class Splitter(ABC):
-    """Абстрактный сплиттер на warm/cold."""
+    """Abstract warm/cold splitter."""
 
     name: str = "base"
 
     @abstractmethod
     def split(self, dataset: Dataset, seed: int = 0) -> SplitResult:
-        """Разбить датасет: выбрать pseudo-cold айтемы, убрать их из train/val."""
+        """Split the dataset: pick pseudo-cold items and remove them from train/val."""
 
     def get_params(self) -> dict:
         return {}
 
 
-#: Реестр сплиттеров.
+#: Splitter registry.
 splitters: Registry[type[Splitter]] = Registry("splitter")
 
 

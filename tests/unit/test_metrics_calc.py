@@ -1,4 +1,4 @@
-"""Тесты сборки метрик поверх DataFrame: calc_metrics, mean_user_auc."""
+"""Tests for metric aggregation over DataFrames: calc_metrics, mean_user_auc."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from warmtransfer.metrics import calc_metrics, mean_user_auc, ranking_metrics
 
 
 def _grid() -> tuple[pd.DataFrame, pd.DataFrame]:
-    # 2 пользователя, кандидаты-айтемы {100,101,102} (полная сетка)
+    # 2 users, candidate items {100,101,102} (full grid)
     reco = pd.DataFrame(
         {
             C.User: [1, 1, 1, 2, 2, 2],
@@ -24,7 +24,7 @@ def _grid() -> tuple[pd.DataFrame, pd.DataFrame]:
 
 def test_mean_user_auc_perfect() -> None:
     reco, gt = _grid()
-    # оба пользователя: релевантный айтем имеет максимальный скор → AUC=1.0 у каждого
+    # both users: the relevant item has the maximum score -> AUC=1.0 for each
     assert mean_user_auc(reco, gt) == pytest.approx(1.0)
 
 
@@ -44,7 +44,7 @@ def test_calc_metrics_keys() -> None:
 
 
 def test_users_without_relevant_excluded() -> None:
-    # пользователь 3 без релевантных в gt не должен ломать усреднение
+    # user 3 with no relevant items in gt must not break the averaging
     reco = pd.DataFrame(
         {C.User: [1, 1, 3, 3], C.Item: [10, 11, 10, 11], C.Score: [0.9, 0.1, 0.5, 0.5]}
     )

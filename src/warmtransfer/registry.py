@@ -1,9 +1,9 @@
-"""Универсальный реестр компонентов с регистрацией через декоратор.
+"""Generic component registry with decorator-based registration.
 
-Используется для методов (``ColdStartMethod``), адаптеров-доноров, датасетов и
-сплиттеров — чтобы конфиг бенчмарка ссылался на компоненты по строковому имени, а
-добавление нового компонента сводилось к одному декоратору (требование куратора —
-лёгкая расширяемость).
+Used for methods (``ColdStartMethod``), donor adapters, datasets and splitters — so
+that the benchmark config can reference components by string name, and adding a new
+component boils down to a single decorator (the supervisor's requirement: easy
+extensibility).
 """
 
 from __future__ import annotations
@@ -17,9 +17,9 @@ T = TypeVar("T")
 
 
 class Registry(Generic[T]):
-    """Реестр «имя -> класс/фабрика».
+    """Registry mapping "name -> class/factory".
 
-    Использование::
+    Usage::
 
         methods: Registry[type[ColdStartMethod]] = Registry("method")
 
@@ -34,28 +34,28 @@ class Registry(Generic[T]):
         self._items: dict[str, T] = {}
 
     def register(self, name: str) -> Callable[[T], T]:
-        """Декоратор регистрации под именем ``name``."""
+        """Decorator that registers an object under ``name``."""
 
         def decorator(obj: T) -> T:
             if name in self._items:
-                raise RegistryError(f"{self._kind} с именем {name!r} уже зарегистрирован")
+                raise RegistryError(f"{self._kind} with name {name!r} is already registered")
             self._items[name] = obj
             return obj
 
         return decorator
 
     def get(self, name: str) -> T:
-        """Вернуть зарегистрированный объект по имени."""
+        """Return the registered object by name."""
         try:
             return self._items[name]
         except KeyError:
-            known = ", ".join(sorted(self._items)) or "<пусто>"
+            known = ", ".join(sorted(self._items)) or "<empty>"
             raise RegistryError(
-                f"Неизвестный {self._kind}: {name!r}. Зарегистрированы: {known}"
+                f"Unknown {self._kind}: {name!r}. Registered: {known}"
             ) from None
 
     def names(self) -> list[str]:
-        """Список зарегистрированных имён (отсортированный)."""
+        """Sorted list of registered names."""
         return sorted(self._items)
 
     def __contains__(self, name: object) -> bool:

@@ -1,7 +1,7 @@
-"""Донор: матричная факторизация ALS (библиотека implicit).
+"""Donor: ALS matrix factorization (implicit library).
 
-Обучается на warm-взаимодействиях, выдаёт скоры по парам (user, warm_item) как
-скалярное произведение факторов. Cold-айтемов в обучении нет (их факторов не существует).
+Trained on warm interactions, produces scores for (user, warm_item) pairs as the
+dot product of factors. Cold items are absent from training (their factors do not exist).
 """
 
 from __future__ import annotations
@@ -22,10 +22,10 @@ from warmtransfer.types import Dataset
 class ALSAdapter(ModelAdapter):
     """implicit AlternatingLeastSquares.
 
-    :param factors: размерность латентного пространства.
-    :param regularization: L2-регуляризация.
-    :param iterations: число итераций ALS.
-    :param alpha: множитель confidence для весов взаимодействий.
+    :param factors: dimensionality of the latent space.
+    :param regularization: L2 regularization.
+    :param iterations: number of ALS iterations.
+    :param alpha: confidence multiplier for interaction weights.
     """
 
     def __init__(
@@ -60,7 +60,7 @@ class ALSAdapter(ModelAdapter):
             (vals, (rows, cols)), shape=(len(self._user_ids), len(self._item_ids))
         )
 
-        # OpenBLAS-threadpool конфликтует с внутренним параллелизмом implicit
+        # OpenBLAS threadpool conflicts with implicit's internal parallelism
         with threadpool_limits(1, "blas"):
             from implicit.als import AlternatingLeastSquares
 
@@ -74,9 +74,9 @@ class ALSAdapter(ModelAdapter):
         return self
 
     def score(self, user_ids: np.ndarray, item_ids: np.ndarray) -> pd.DataFrame:
-        """Скоры для кросс-произведения user_ids × item_ids (только известные warm)."""
+        """Scores for the cross product user_ids × item_ids (known warm only)."""
         if self._user_ids is None or self._item_ids is None:
-            raise RuntimeError("ALSAdapter: вызовите fit() до score()")
+            raise RuntimeError("ALSAdapter: call fit() before score()")
 
         u_known = [u for u in user_ids if u in self._u_pos]
         i_known = [it for it in item_ids if it in self._i_pos]

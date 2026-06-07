@@ -1,12 +1,12 @@
-"""Ранжирующие метрики (per-user). Бинарная релевантность.
+"""Ranking metrics (per-user). Binary relevance.
 
-Все функции принимают:
-  * ``ranked`` — последовательность item_id в порядке выдачи (лучший первым);
-  * ``relevant`` — множество релевантных item_id;
-  * ``k`` — отсечка.
+All functions take:
+  * ``ranked`` — sequence of item_id in ranking order (best first);
+  * ``relevant`` — set of relevant item_id;
+  * ``k`` — cutoff.
 
-Соглашение: если у пользователя нет релевантных айтемов, метрика не определена и
-возвращается ``nan`` (такие пользователи исключаются при усреднении).
+Convention: if a user has no relevant items, the metric is undefined and
+``nan`` is returned (such users are excluded from averaging).
 """
 
 from __future__ import annotations
@@ -38,8 +38,8 @@ def precision_at_k(ranked: Sequence, relevant: set, k: int) -> float:
 def average_precision_at_k(ranked: Sequence, relevant: set, k: int) -> float:
     """AP@k = (Σ P@i · rel(i)) / min(|relevant|, k).
 
-    Дубликаты одного и того же relevant-айтема в ranked засчитываются один раз
-    (иначе метрика может превысить 1).
+    Duplicates of the same relevant item in ranked are counted once
+    (otherwise the metric could exceed 1).
     """
     if not relevant:
         return math.nan
@@ -55,9 +55,9 @@ def average_precision_at_k(ranked: Sequence, relevant: set, k: int) -> float:
 
 
 def ndcg_at_k(ranked: Sequence, relevant: set, k: int) -> float:
-    """NDCG@k при бинарной релевантности: DCG@k / IDCG@k.
+    """NDCG@k with binary relevance: DCG@k / IDCG@k.
 
-    Каждый relevant-айтем учитывается один раз (повтор не даёт лишнего gain).
+    Each relevant item is counted once (a repeat yields no extra gain).
     """
     if not relevant:
         return math.nan
@@ -73,7 +73,7 @@ def ndcg_at_k(ranked: Sequence, relevant: set, k: int) -> float:
 
 
 def reciprocal_rank_at_k(ranked: Sequence, relevant: set, k: int) -> float:
-    """RR@k = 1 / (позиция первого релевантного), 0 если его нет в топ-k."""
+    """RR@k = 1 / (position of the first relevant item), 0 if none in top-k."""
     if not relevant:
         return math.nan
     for i, item in enumerate(_topk(ranked, k), start=1):
@@ -82,7 +82,7 @@ def reciprocal_rank_at_k(ranked: Sequence, relevant: set, k: int) -> float:
     return 0.0
 
 
-#: Реестр per-user ранжирующих метрик: имя -> функция (ranked, relevant, k) -> float.
+#: Registry of per-user ranking metrics: name -> function (ranked, relevant, k) -> float.
 RANKING_FUNCS = {
     "recall": recall_at_k,
     "precision": precision_at_k,
@@ -98,7 +98,7 @@ def mean_over_users(
     func,
     k: int,
 ) -> float:
-    """Усреднить per-user метрику по пользователям, у которых есть релевантные айтемы."""
+    """Average a per-user metric over users that have relevant items."""
     vals = []
     for user, relevant in relevant_by_user.items():
         if not relevant:

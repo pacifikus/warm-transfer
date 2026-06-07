@@ -1,11 +1,11 @@
-"""Честный pseudo-cold сплит по айтемам (анти-утечка).
+"""Honest pseudo-cold split by items (anti-leakage).
 
-Подмножество айтемов объявляется псевдо-cold: их взаимодействия ПОЛНОСТЬЮ убираются из
-train (и из val-фолда), оставаясь только в test как ground truth. Донор, Grouped MP и
-поиск соседей видят только warm-айтемы. См. ``docs/eval-protocol.md``.
+A subset of items is declared pseudo-cold: their interactions are COMPLETELY removed from
+train (and from the val fold), remaining only in test as ground truth. The donor, Grouped MP
+and neighbor search see only warm items. See ``docs/eval-protocol.md``.
 
-Стратификация cold-выборки по бакетам популярности — чтобы cold-айтемы покрывали весь
-диапазон популярности, а не только хвост/голову (иначе бейзлайны смещаются).
+Stratifying the cold sample by popularity buckets ensures that cold items span the whole
+popularity range, not just the tail/head (otherwise the baselines get biased).
 """
 
 from __future__ import annotations
@@ -23,11 +23,11 @@ from warmtransfer.types import Dataset, SplitResult
 
 
 def _largest_remainder(weights: list[int], target: int) -> list[int]:
-    """Распределить ``target`` единиц по корзинам пропорционально ``weights``.
+    """Distribute ``target`` units across bins proportionally to ``weights``.
 
-    Метод наибольшего остатка: floor от пропорции + раздача остатка по убыванию
-    дробных частей. Гарантирует ``sum(result) == min(target, sum(weights))`` и
-    ``result[i] <= weights[i]``.
+    Largest remainder method: floor of the proportion + handing out the remainder in
+    decreasing order of fractional parts. Guarantees ``sum(result) == min(target, sum(weights))``
+    and ``result[i] <= weights[i]``.
     """
     total_w = sum(weights)
     target = min(target, total_w)
@@ -37,7 +37,7 @@ def _largest_remainder(weights: list[int], target: int) -> list[int]:
     exact = [target * w / total_w for w in weights]
     alloc = [int(e) for e in exact]
     remainder = target - sum(alloc)
-    # кандидаты на +1 — у кого есть запас и больше дробная часть
+    # candidates for +1 — those with spare capacity and a larger fractional part
     order = sorted(
         (i for i in range(len(weights)) if alloc[i] < weights[i]),
         key=lambda i: exact[i] - alloc[i],
@@ -50,13 +50,13 @@ def _largest_remainder(weights: list[int], target: int) -> list[int]:
 
 @register_splitter("pseudo_cold")
 class PseudoColdSplitter(Splitter):
-    """Сплит warm / val-cold / test-cold по айтемам.
+    """Warm / val-cold / test-cold split by items.
 
-    :param cold_frac: доля айтемов в test-cold (ground truth).
-    :param val_frac: доля айтемов в val-cold (тюнинг гиперпараметров).
-    :param n_pop_buckets: число бакетов популярности для стратификации.
-    :param min_item_interactions: минимум взаимодействий, чтобы айтем мог стать cold
-        (иначе у него не будет ground truth для оценки).
+    :param cold_frac: fraction of items in test-cold (ground truth).
+    :param val_frac: fraction of items in val-cold (hyperparameter tuning).
+    :param n_pop_buckets: number of popularity buckets for stratification.
+    :param min_item_interactions: minimum number of interactions for an item to become cold
+        (otherwise it would have no ground truth for evaluation).
     """
 
     def __init__(
@@ -67,11 +67,11 @@ class PseudoColdSplitter(Splitter):
         min_item_interactions: int = 1,
     ) -> None:
         if not 0 < cold_frac < 1:
-            raise ValueError("cold_frac должен быть в (0, 1)")
+            raise ValueError("cold_frac must be in (0, 1)")
         if not 0 <= val_frac < 1:
-            raise ValueError("val_frac должен быть в [0, 1)")
+            raise ValueError("val_frac must be in [0, 1)")
         if cold_frac + val_frac >= 1:
-            raise ValueError("cold_frac + val_frac должны быть < 1")
+            raise ValueError("cold_frac + val_frac must be < 1")
         self.cold_frac = cold_frac
         self.val_frac = val_frac
         self.n_pop_buckets = n_pop_buckets
@@ -81,12 +81,12 @@ class PseudoColdSplitter(Splitter):
         inter = validate_interactions(dataset.interactions)
         rng = make_rng(seed)
 
-        # Популярность для стратификации cold-айтемов считается по ПОЛНОМУ числу
-        # взаимодействий айтема — это намеренно и неизбежно: после объявления айтема
-        # cold его взаимодействия удаляются из train, поэтому популярность из train
-        # для него тождественно нулевая. Стратификация лишь РАВНОМЕРНО распределяет
-        # cold-айтемы по уровням популярности (чтобы eval не смещался к нишевым/массовым)
-        # и НЕ протекает в признаки методов — те видят только train + статичный контент.
+        # The popularity used to stratify cold items is computed from the FULL number of
+        # an item's interactions — this is deliberate and unavoidable: once an item is
+        # declared cold, its interactions are removed from train, so its train-derived
+        # popularity is identically zero. Stratification merely distributes cold items
+        # UNIFORMLY across popularity levels (so eval is not biased toward niche/mass items)
+        # and does NOT leak into method features — those see only train + static content.
         pop = cast("pd.Series", inter.groupby(C.Item).size())
         eligible = np.asarray(pop.index[pop.to_numpy() >= self.min_item_interactions])
 
@@ -110,18 +110,19 @@ class PseudoColdSplitter(Splitter):
     def _select_cold(
         self, eligible: np.ndarray, pop: pd.Series, rng: np.random.Generator
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Стратифицированно по популярности выбрать test-cold и val-cold айтемы.
+        """Select test-cold and val-cold items, stratified by popularity.
 
-        Доли считаются от ГЛОБАЛЬНОГО числа eligible-айтемов, затем распределяются по
-        бакетам методом наибольшего остатка (largest remainder) — это исключает обнуление
-        выборки при независимом округлении в малых стратах и сохраняет общую долю.
+        The fractions are taken relative to the GLOBAL number of eligible items, then
+        distributed across buckets via the largest remainder method — this prevents the
+        sample from collapsing to zero under independent rounding in small strata and
+        preserves the overall fraction.
         """
         pop_eligible = pop.loc[eligible]
         total = len(pop_eligible)
         if total == 0:
             return np.asarray([]), np.asarray([])
 
-        # бакеты популярности; duplicates='drop' — на случай вырожденных квантилей
+        # popularity buckets; duplicates='drop' — in case of degenerate quantiles
         try:
             buckets = pd.qcut(pop_eligible, q=self.n_pop_buckets, labels=False, duplicates="drop")
         except ValueError:
@@ -132,7 +133,7 @@ class PseudoColdSplitter(Splitter):
 
         n_test_total = self._target(total, self.cold_frac)
         n_val_total = self._target(total, self.val_frac)
-        # феасибилити: суммарно не больше доступного
+        # feasibility: combined total must not exceed what is available
         if n_test_total + n_val_total > total:
             n_val_total = max(0, total - n_test_total)
 
@@ -151,7 +152,7 @@ class PseudoColdSplitter(Splitter):
 
     @staticmethod
     def _target(total: int, frac: float) -> int:
-        """Глобальный target выборки: округление, но ≥1 при frac>0 и непустом пуле."""
+        """Global sample target: rounding, but ≥1 when frac>0 and the pool is non-empty."""
         if frac <= 0 or total == 0:
             return 0
         return max(1, round(total * frac))

@@ -1,4 +1,4 @@
-"""Тесты dataclass-контрактов пользовательских типов."""
+"""Tests for the dataclass contracts of user-facing types."""
 
 from __future__ import annotations
 

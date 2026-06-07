@@ -1,8 +1,8 @@
-"""KNN-агрегация скоров донора по контентным соседям (наивный метод).
+"""KNN aggregation of donor scores over content neighbors (naive method).
 
-Для cold-айтема берутся k ближайших по контенту warm-айтемов; скор = взвешенное (по
-сходству) среднее скоров донора для этих соседей. Это воспроизведение наивного подхода,
-который обычно проигрывает Grouped MP (тянет глобальную популярность соседей).
+For a cold item we take the k nearest (by content) warm items; the score is the
+similarity-weighted average of donor scores for those neighbors. This reproduces the naive
+approach, which usually loses to Grouped MP (it pulls in the global popularity of neighbors).
 """
 
 from __future__ import annotations
@@ -18,10 +18,10 @@ from warmtransfer.types import TransferInputs
 
 @register_method("knn_score_avg")
 class KNNScoreAggregation(ColdStartMethod):
-    """Взвешенное по сходству среднее скоров донора по k контентным соседям.
+    """Similarity-weighted average of donor scores over k content neighbors.
 
-    :param k: число ближайших warm-соседей.
-    :param clip_negative: обнулять отрицательные сходства (косинус может быть <0).
+    :param k: number of nearest warm neighbors.
+    :param clip_negative: zero out negative similarities (cosine can be < 0).
     """
 
     requires = frozenset({"donor_scores", "similarity", "content"})
@@ -33,19 +33,19 @@ class KNNScoreAggregation(ColdStartMethod):
 
     def _fit(self, inputs: TransferInputs, seed: int) -> None:
         if inputs.warm_features is None or inputs.cold_features is None:
-            raise ValueError("knn_score_avg требует warm_features и cold_features")
+            raise ValueError("knn_score_avg requires warm_features and cold_features")
         if inputs.similarity is None:
-            raise ValueError("knn_score_avg требует similarity [n_cold, n_warm]")
+            raise ValueError("knn_score_avg requires similarity [n_cold, n_warm]")
 
         self._warm_ids = np.asarray(inputs.warm_features.item_ids)
         self._cold_ids = np.asarray(inputs.cold_features.item_ids)
         self._cold_pos = {it: r for r, it in enumerate(self._cold_ids)}
 
-        # матрица скоров донора: [n_users, n_warm], выровнена по self._warm_ids
+        # donor score matrix: [n_users, n_warm], aligned to self._warm_ids
         self._donor_matrix, self._user_ids = _pivot_scores(inputs.donor_scores, self._warm_ids)
         self._user_pos = {u: i for i, u in enumerate(self._user_ids)}
 
-        # для каждого cold-айтема: индексы top-k соседей и нормированные веса
+        # for each cold item: indices of top-k neighbors and normalized weights
         sim = np.asarray(inputs.similarity, dtype=float)
         if self.clip_negative:
             sim = np.clip(sim, 0.0, None)
@@ -56,7 +56,7 @@ class KNNScoreAggregation(ColdStartMethod):
         user_ids = np.asarray(user_ids)
         cold_item_ids = np.asarray(cold_item_ids)
 
-        # строки донор-матрицы для запрошенных пользователей (неизвестные → нули)
+        # donor-matrix rows for the requested users (unknown ones -> zeros)
         rows = np.array([self._user_pos.get(u, -1) for u in user_ids])
         known = rows >= 0
         donor = np.zeros((len(user_ids), self._donor_matrix.shape[1]))
@@ -69,7 +69,7 @@ class KNNScoreAggregation(ColdStartMethod):
                 continue
             nb = self._neighbors[r]
             w = self._weights[r]
-            # [n_users] = donor[:, соседи] @ веса
+            # [n_users] = donor[:, neighbors] @ weights
             scores[:, c] = donor[:, nb] @ w
         return cross_join_frame(user_ids, cold_item_ids, scores)
 
@@ -80,12 +80,12 @@ class KNNScoreAggregation(ColdStartMethod):
 def _pivot_scores(
     donor_scores: pd.DataFrame, warm_ids: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Свести длинные скоры донора в матрицу [n_users, n_warm], выровненную по ``warm_ids``."""
+    """Pivot long-format donor scores into a [n_users, n_warm] matrix aligned to ``warm_ids``."""
     w_pos = {it: j for j, it in enumerate(warm_ids)}
     user_ids = unique_sorted(donor_scores[C.User])
     u_pos = {u: i for i, u in enumerate(user_ids)}
 
-    # скоры донора заданы по warm-айтемам → все item_id есть в w_pos
+    # donor scores are defined over warm items -> every item_id is present in w_pos
     matrix = np.zeros((len(user_ids), len(warm_ids)))
     rows = map_codes(donor_scores[C.User], u_pos)
     cols = map_codes(donor_scores[C.Item], w_pos)
@@ -94,7 +94,7 @@ def _pivot_scores(
 
 
 def _topk_neighbors(sim: np.ndarray, k: int) -> tuple[list, list]:
-    """Для каждой строки sim вернуть индексы top-k и нормированные веса (Σ=1)."""
+    """For each row of sim, return top-k indices and normalized weights (sum = 1)."""
     n_warm = sim.shape[1]
     kk = min(k, n_warm)
     neighbors: list = []

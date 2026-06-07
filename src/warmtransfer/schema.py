@@ -1,8 +1,8 @@
-"""Валидация и нормализация входных DataFrame.
+"""Validation and normalization of input DataFrames.
 
-DataFrame'ы плохо ложатся на pydantic-модели, поэтому здесь — явные функции-валидаторы,
-бросающие :class:`SchemaError`. Pydantic используется для конфигов
-(см. ``warmtransfer.bench.config``).
+DataFrames map poorly onto pydantic models, so here we use explicit validator functions
+that raise :class:`SchemaError`. Pydantic is used for configs
+(see ``warmtransfer.bench.config``).
 """
 
 from __future__ import annotations
@@ -16,49 +16,49 @@ from warmtransfer.exceptions import SchemaError
 def _require_columns(df: pd.DataFrame, required: tuple[str, ...], where: str) -> None:
     missing = [c for c in required if c not in df.columns]
     if missing:
-        raise SchemaError(f"{where}: отсутствуют колонки {missing}. Есть: {list(df.columns)}")
+        raise SchemaError(f"{where}: missing columns {missing}. Present: {list(df.columns)}")
 
 
 def validate_interactions(df: pd.DataFrame, *, require_weight: bool = False) -> pd.DataFrame:
-    """Проверить и нормализовать DataFrame взаимодействий.
+    """Validate and normalize an interactions DataFrame.
 
-    Требует ``user_id``, ``item_id``. Добавляет ``weight=1.0``, если её нет и
-    ``require_weight=False``. Бросает :class:`SchemaError` при дубликатах пар или NaN
-    в ключевых колонках.
+    Requires ``user_id``, ``item_id``. Adds ``weight=1.0`` if it is missing and
+    ``require_weight=False``. Raises :class:`SchemaError` on duplicate pairs or NaN
+    in the key columns.
     """
     _require_columns(df, C.Interactions, "interactions")
     out = df.copy()
 
     if bool(out[[C.User, C.Item]].isna().to_numpy().any()):
-        raise SchemaError("interactions: NaN в user_id/item_id")
+        raise SchemaError("interactions: NaN in user_id/item_id")
 
     if C.Weight not in out.columns:
         if require_weight:
-            raise SchemaError("interactions: требуется колонка weight")
+            raise SchemaError("interactions: weight column is required")
         out[C.Weight] = 1.0
 
     dup = out.duplicated(subset=[C.User, C.Item]).sum()
     if dup:
-        raise SchemaError(f"interactions: {dup} дублирующихся пар (user_id, item_id)")
+        raise SchemaError(f"interactions: {dup} duplicate (user_id, item_id) pairs")
 
     return out
 
 
 def validate_scores(df: pd.DataFrame) -> pd.DataFrame:
-    """Проверить DataFrame скоров донора: ``user_id``, ``item_id``, ``score``."""
+    """Validate a donor scores DataFrame: ``user_id``, ``item_id``, ``score``."""
     _require_columns(df, C.Scores, "scores")
     out = df.copy()
     if bool(out[C.Score].isna().any()):
-        raise SchemaError("scores: NaN в колонке score")
+        raise SchemaError("scores: NaN in score column")
     dup = out.duplicated(subset=[C.User, C.Item]).sum()
     if dup:
-        raise SchemaError(f"scores: {dup} дублирующихся пар (user_id, item_id)")
+        raise SchemaError(f"scores: {dup} duplicate (user_id, item_id) pairs")
     return out
 
 
 def validate_recommendations(df: pd.DataFrame) -> pd.DataFrame:
-    """Проверить выход метода: ``user_id``, ``item_id``, ``score`` (+ опц. ``rank``)."""
+    """Validate a method output: ``user_id``, ``item_id``, ``score`` (+ optional ``rank``)."""
     _require_columns(df, C.Scores, "recommendations")
     if bool(df[C.Score].isna().any()):
-        raise SchemaError("recommendations: NaN в колонке score")
+        raise SchemaError("recommendations: NaN in score column")
     return df

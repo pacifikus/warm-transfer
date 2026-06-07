@@ -1,7 +1,7 @@
-"""AUC (площадь под ROC) через ранговую формулу Манна–Уитни.
+"""AUC (area under ROC) via the Mann-Whitney rank formula.
 
-Своя реализация (без sklearn в горячем пути), корректно обрабатывает ties через
-усреднение рангов. Сверяется с ``sklearn.roc_auc_score`` в тестах.
+Custom implementation (without sklearn on the hot path), correctly handles ties by
+averaging ranks. Cross-checked against ``sklearn.roc_auc_score`` in the tests.
 """
 
 from __future__ import annotations
@@ -13,9 +13,9 @@ from scipy.stats import rankdata
 
 
 def auc(y_true: np.ndarray, y_score: np.ndarray) -> float:
-    """AUC по бинарным меткам ``y_true`` и скорам ``y_score``.
+    """AUC from binary labels ``y_true`` and scores ``y_score``.
 
-    Возвращает ``nan``, если в выборке только один класс (AUC не определён).
+    Returns ``nan`` if the sample contains only one class (AUC is undefined).
     """
     y_true = np.asarray(y_true)
     y_score = np.asarray(y_score, dtype=float)
@@ -23,7 +23,7 @@ def auc(y_true: np.ndarray, y_score: np.ndarray) -> float:
     n_neg = int((y_true == 0).sum())
     if n_pos == 0 or n_neg == 0:
         return math.nan
-    ranks = rankdata(y_score)  # средние ранги при ties
+    ranks = rankdata(y_score)  # average ranks on ties
     sum_pos = ranks[y_true == 1].sum()
-    # формула Манна–Уитни: (Σranks_pos - n_pos(n_pos+1)/2) / (n_pos·n_neg)
+    # Mann-Whitney formula: (Σranks_pos - n_pos(n_pos+1)/2) / (n_pos·n_neg)
     return float((sum_pos - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg))

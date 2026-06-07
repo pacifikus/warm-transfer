@@ -1,4 +1,4 @@
-"""Конфигурация прогона бенчмарка (pydantic — валидация на границе)."""
+"""Benchmark run configuration (pydantic — validation at the boundary)."""
 
 from __future__ import annotations
 
@@ -9,10 +9,10 @@ from pydantic import BaseModel, Field
 
 
 class ComponentCfg(BaseModel):
-    """Компонент по имени из реестра + его параметры.
+    """A component referenced by its registry name plus its parameters.
 
-    :param label: имя в таблице результатов (по умолчанию ``name``). Нужен для абляций —
-        один метод с разными гиперпараметрами под разными метками в одном прогоне.
+    :param label: name used in the results table (defaults to ``name``). Needed for ablations —
+        one method with different hyperparameters under different labels in a single run.
     """
 
     name: str
@@ -21,7 +21,7 @@ class ComponentCfg(BaseModel):
 
     @property
     def key(self) -> str:
-        """Метка для группировки в результатах."""
+        """Label used for grouping in the results."""
         return self.label or self.name
 
 
@@ -31,7 +31,7 @@ class SplitterCfg(BaseModel):
 
 
 class BenchConfig(BaseModel):
-    """Описание прогона: датасеты × доноры × методы × сиды."""
+    """Run specification: datasets × donors × methods × seeds."""
 
     datasets: list[str]
     donors: list[ComponentCfg]

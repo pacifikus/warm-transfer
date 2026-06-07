@@ -1,4 +1,4 @@
-"""Тесты анализа: recall по бакетам популярности и RelaImpr в таблице."""
+"""Analysis tests: recall by popularity buckets and RelaImpr in the table."""
 
 from __future__ import annotations
 
@@ -11,17 +11,17 @@ from warmtransfer.columns import Columns as C
 
 
 def test_recall_by_popularity_bucket() -> None:
-    # 2 cold-айтема: 100 (нишевый) и 200 (популярный)
+    # 2 cold items: 100 (niche) and 200 (popular)
     item_pop = {100: 1, 200: 100}
-    # user1: top-1 = item 200; релевантны оба (100 и 200)
+    # user1: top-1 = item 200; both are relevant (100 and 200)
     reco = pd.DataFrame(
         {C.User: [1, 1], C.Item: [200, 100], C.Score: [0.9, 0.1]}
     )
     gt = pd.DataFrame({C.User: [1, 1], C.Item: [100, 200]})
 
     tbl = recall_by_popularity_bucket(reco, gt, item_pop, n_buckets=2, k=1)
-    # bucket 0 (нишевый, item100): не попал в top-1 → recall 0
-    # bucket 1 (популярный, item200): попал → recall 1
+    # bucket 0 (niche, item100): not in top-1 → recall 0
+    # bucket 1 (popular, item200): in top-1 → recall 1
     by_bucket = dict(zip(tbl["bucket"], tbl["recall@1"], strict=True))
     assert by_bucket[0] == 0.0
     assert by_bucket[1] == 1.0

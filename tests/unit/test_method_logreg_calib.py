@@ -1,4 +1,4 @@
-"""Смоук-тест logreg_calib: обучается на val-cold, выдаёт корректную схему."""
+"""Smoke test for logreg_calib: trains on val-cold, returns the correct schema."""
 
 from __future__ import annotations
 

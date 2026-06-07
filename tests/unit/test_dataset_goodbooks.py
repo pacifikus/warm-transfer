@@ -1,4 +1,4 @@
-"""Юнит-тест для GoodBooks-10k: проверяем построение фич без скачивания."""
+"""Unit test for GoodBooks-10k: verify feature construction without downloading."""
 
 from __future__ import annotations
 
@@ -12,15 +12,15 @@ from warmtransfer.types import ItemFeatures
 
 
 def _synthetic_books() -> pd.DataFrame:
-    """Маленький synthetic books DataFrame."""
+    """Small synthetic books DataFrame."""
     return pd.DataFrame(
         {
             "book_id": [1, 2, 3, 4],
             "authors": [
-                "Jane Austen, Editor X",  # первый автор — Jane Austen
-                "Jane Austen",  # тот же первый автор
+                "Jane Austen, Editor X",  # first author is Jane Austen
+                "Jane Austen",  # same first author
                 "Leo Tolstoy",
-                None,  # пропуск автора
+                None,  # missing author
             ],
             "original_publication_year": [1813.0, 1815.0, 1869.0, np.nan],
         }
@@ -34,7 +34,7 @@ def test_books_to_features_type_and_shape() -> None:
     assert isinstance(feats, ItemFeatures)
     assert feats.n_items == 4
     assert mat.shape[0] == 4
-    # число колонок = число авторов + число десятилетий
+    # number of columns = number of authors + number of decades
     assert mat.shape[1] == len(feats.feature_names)
     assert mat.dtype == np.float32
     np.testing.assert_array_equal(feats.item_ids, np.array([1, 2, 3, 4]))
@@ -46,10 +46,10 @@ def test_books_to_features_author_one_hot() -> None:
 
     cols = feats.feature_names
     austen_col = cols.index("author=Jane Austen")
-    # книги 0 и 1 имеют первого автора Jane Austen
+    # books 0 and 1 have Jane Austen as their first author
     assert mat[0, austen_col] == 1.0
     assert mat[1, austen_col] == 1.0
-    # книга 2 (Tolstoy) — нет
+    # book 2 (Tolstoy) does not
     assert mat[2, austen_col] == 0.0
 
 
@@ -66,5 +66,5 @@ def test_books_to_features_decade_one_hot() -> None:
     assert mat[0, d1810] == 1.0
     assert mat[2, d1860] == 1.0
     assert mat[3, d_unknown] == 1.0
-    # у книги без года остальные десятилетия выставлены в 0
+    # for the book without a year, the other decades are set to 0
     assert mat[3, d1810] == 0.0

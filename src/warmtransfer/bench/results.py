@@ -1,4 +1,4 @@
-"""Сбор и экспорт результатов бенчмарка."""
+"""Collecting and exporting benchmark results."""
 
 from __future__ import annotations
 
@@ -11,10 +11,10 @@ from warmtransfer.metrics.relative import rela_impr
 
 
 def to_table(records: list[dict], *, with_std: bool = False) -> pd.DataFrame:
-    """Список записей прогона → DataFrame, усреднённый по сидам.
+    """List of run records -> DataFrame, averaged over seeds.
 
-    :param with_std: добавить колонки ``<metric>_std`` — стандартное отклонение по сидам
-        (для оценки устойчивости при нескольких сидах).
+    :param with_std: add ``<metric>_std`` columns — the standard deviation over seeds
+        (for assessing stability across multiple seeds).
     """
     df = pd.DataFrame(records)
     group_cols = ["dataset", "donor", "method"]
@@ -31,10 +31,10 @@ def to_table(records: list[dict], *, with_std: bool = False) -> pd.DataFrame:
 def add_rela_impr(
     table: pd.DataFrame, base_method: str, metric: str = "auc"
 ) -> pd.DataFrame:
-    """Добавить колонку ``rela_impr`` — относительное улучшение AUC над ``base_method``.
+    """Add a ``rela_impr`` column — the relative AUC improvement over ``base_method``.
 
-    RelaImpr = (AUC_model − 0.5)/(AUC_base − 0.5) − 1, считается внутри каждой пары
-    (dataset, donor). Для самого базового метода = 0.0; если базовый отсутствует — NaN.
+    RelaImpr = (AUC_model − 0.5)/(AUC_base − 0.5) − 1, computed within each
+    (dataset, donor) pair. For the base method itself = 0.0; if the base is missing — NaN.
     """
     out = table.copy()
     rela: list[float] = []
@@ -54,7 +54,7 @@ def add_rela_impr(
 
 
 def save_table(df: pd.DataFrame, out_dir: str | Path, name: str = "results") -> dict[str, Path]:
-    """Сохранить таблицу в parquet + markdown. Возвращает пути."""
+    """Save the table to parquet + markdown. Returns the paths."""
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     paths = {}

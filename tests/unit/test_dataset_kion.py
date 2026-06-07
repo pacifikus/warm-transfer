@@ -1,4 +1,4 @@
-"""Тест построения контент-фич KION из синтетического items-фрейма (без загрузки)."""
+"""Test building KION content features from a synthetic items frame (without loading)."""
 
 from __future__ import annotations
 
@@ -31,17 +31,17 @@ def test_items_to_features_multihot() -> None:
     assert mat.shape[0] == 3
     names = feats.feature_names
 
-    # жанры — multi-hot: item 103 (drama, comedy) активирует оба жанра
+    # genres — multi-hot: item 103 (drama, comedy) activates both genres
     drama = names.index("genre=drama")
     comedy = names.index("genre=comedy")
     assert mat[2, drama] == 1.0
     assert mat[2, comedy] == 1.0
     assert mat[1, drama] == 0.0
 
-    # тип контента — one-hot
+    # content type — one-hot
     assert mat[0, names.index("type=film")] == 1.0
     assert mat[1, names.index("type=series")] == 1.0
 
-    # десятилетие: пропущенный год → decade_unknown
+    # decade: missing year → decade_unknown
     assert mat[2, names.index("decade_unknown")] == 1.0
     assert mat[0, names.index("decade_2000")] == 1.0

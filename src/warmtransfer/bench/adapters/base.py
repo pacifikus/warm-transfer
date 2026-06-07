@@ -1,8 +1,9 @@
-"""Интерфейс модели-донора (ModelAdapter) + реестр.
+"""Donor model interface (ModelAdapter) + registry.
 
-Адаптер оборачивает стороннюю модель (implicit/LightFM/CatBoost/RecTools) в единый
-интерфейс: обучить на warm-взаимодействиях и выдать скоры по warm-айтемам. Эти скоры
-— вход для cold-start метода. Сам трансфер делает ``warmtransfer``, не адаптер.
+The adapter wraps a third-party model (implicit/LightFM/CatBoost/RecTools) into a
+unified interface: train on warm interactions and emit scores for warm items. These
+scores are the input for a cold-start method. The transfer itself is done by
+``warmtransfer``, not by the adapter.
 """
 
 from __future__ import annotations
@@ -19,33 +20,33 @@ from warmtransfer.types import Dataset
 
 
 class ModelAdapter(ABC):
-    """Абстрактный донор.
+    """Abstract donor.
 
-    Контракт:
-      * :meth:`fit` обучается ТОЛЬКО на warm-взаимодействиях (cold-айтемов там нет);
-      * :meth:`score` возвращает ``[user_id, item_id, score]`` по запрошенным парам;
-      * :meth:`embeddings` — опционально user/item латентные факторы (для [EMB]-методов).
+    Contract:
+      * :meth:`fit` trains ONLY on warm interactions (no cold items there);
+      * :meth:`score` returns ``[user_id, item_id, score]`` for the requested pairs;
+      * :meth:`embeddings` — optional user/item latent factors (for [EMB] methods).
     """
 
     name: str = "base"
 
     @abstractmethod
     def fit(self, dataset: Dataset, seed: int = 0) -> ModelAdapter:
-        """Обучить донора на ``dataset.interactions`` (warm)."""
+        """Train the donor on ``dataset.interactions`` (warm)."""
 
     @abstractmethod
     def score(self, user_ids: np.ndarray, item_ids: np.ndarray) -> pd.DataFrame:
-        """Скоры по парам (user_ids × item_ids), long-format ``[user_id, item_id, score]``."""
+        """Scores for pairs (user_ids × item_ids), long-format ``[user_id, item_id, score]``."""
 
     def embeddings(self) -> dict[str, np.ndarray] | None:
-        """Латентные факторы, если модель их имеет: ``{"user": ..., "item": ...}``."""
+        """Latent factors, if the model has them: ``{"user": ..., "item": ...}``."""
         return None
 
     def get_params(self) -> dict:
         return {}
 
 
-#: Реестр доноров.
+#: Donor registry.
 adapters: Registry[type[ModelAdapter]] = Registry("adapter")
 
 

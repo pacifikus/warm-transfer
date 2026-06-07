@@ -1,7 +1,7 @@
-"""Базовый интерфейс cold-start метода (трансфер/калибровка скоров) + реестр.
+"""Base cold-start method interface (score transfer/calibration) + registry.
 
-Это ядро plug&play: метод принимает скоры донора по warm-айтемам (+опц. контент/
-сходство/эмбеддинги) и предсказывает скоры для пар (user, cold_item).
+This is the plug&play core: a method takes donor scores over warm items (+optionally
+content/similarity/embeddings) and predicts scores for (user, cold_item) pairs.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from warmtransfer.exceptions import MissingInputError, NotFittedError
 from warmtransfer.registry import Registry
 from warmtransfer.types import TransferInputs
 
-#: Допустимые источники входа, которые метод может объявить в ``requires``.
+#: Allowed input sources that a method may declare in ``requires``.
 INPUT_KINDS = frozenset(
     {
         "donor_scores",
@@ -27,22 +27,22 @@ INPUT_KINDS = frozenset(
         "similarity",
         "embeddings",
         "item_meta",
-        "val",  # val-cold фолд (для супервизорных методов)
+        "val",  # val-cold fold (for supervised methods)
     }
 )
 
 
 class ColdStartMethod(ABC):
-    """Абстрактный cold-start метод.
+    """Abstract cold-start method.
 
-    Подклассы объявляют:
-      * ``name`` — имя для реестра/конфига;
-      * ``requires`` — какие входы обязательны (валидируется в :meth:`fit`).
+    Subclasses declare:
+      * ``name`` — the name used in the registry/config;
+      * ``requires`` — which inputs are mandatory (validated in :meth:`fit`).
 
-    Контракт:
-      * :meth:`fit` возвращает ``self``;
-      * :meth:`predict` возвращает DataFrame ``[user_id, item_id, score]``;
-      * детерминированность при фиксированном ``seed``.
+    Contract:
+      * :meth:`fit` returns ``self``;
+      * :meth:`predict` returns a DataFrame ``[user_id, item_id, score]``;
+      * deterministic for a fixed ``seed``.
     """
 
     name: str = "base"
@@ -51,23 +51,23 @@ class ColdStartMethod(ABC):
     def __init__(self) -> None:
         self._fitted = False
 
-    # --- контракт ---
+    # --- contract ---
 
     @abstractmethod
     def _fit(self, inputs: TransferInputs, seed: int) -> None:
-        """Реализация обучения метода (заполняется подклассом)."""
+        """Method training implementation (provided by the subclass)."""
 
     @abstractmethod
     def predict(self, user_ids: np.ndarray, cold_item_ids: np.ndarray) -> pd.DataFrame:
-        """Предсказать скоры для всех пар (user_ids × cold_item_ids).
+        """Predict scores for all (user_ids × cold_item_ids) pairs.
 
-        Возвращает long-format DataFrame ``[user_id, item_id, score]``.
+        Returns a long-format DataFrame ``[user_id, item_id, score]``.
         """
 
-    # --- публичный API с валидацией входов ---
+    # --- public API with input validation ---
 
     def fit(self, inputs: TransferInputs, seed: int = 0) -> ColdStartMethod:
-        """Проверить обязательные входы и обучить метод."""
+        """Validate the mandatory inputs and train the method."""
         self._validate_inputs(inputs)
         self._fit(inputs, seed)
         self._fitted = True
@@ -76,21 +76,21 @@ class ColdStartMethod(ABC):
     def _validate_inputs(self, inputs: TransferInputs) -> None:
         unknown = self.requires - INPUT_KINDS
         if unknown:
-            raise ValueError(f"{self.name}: неизвестные требования {unknown}")
+            raise ValueError(f"{self.name}: unknown requirements {unknown}")
         present = _present_inputs(inputs)
         missing = self.requires - present
         if missing:
             raise MissingInputError(
-                f"Метод {self.name!r} требует {sorted(self.requires)}, "
-                f"но отсутствуют: {sorted(missing)}"
+                f"Method {self.name!r} requires {sorted(self.requires)}, "
+                f"but the following are missing: {sorted(missing)}"
             )
 
     def _check_fitted(self) -> None:
         if not self._fitted:
-            raise NotFittedError(f"{self.name}: вызовите fit() до predict()")
+            raise NotFittedError(f"{self.name}: call fit() before predict()")
 
     def get_params(self) -> dict:
-        """Гиперпараметры метода (для логирования в артефакты)."""
+        """Method hyperparameters (for logging into artifacts)."""
         return {}
 
 
@@ -116,7 +116,7 @@ def _present_inputs(inputs: TransferInputs) -> set[str]:
 def cross_join_frame(
     user_ids: np.ndarray, cold_item_ids: np.ndarray, scores: np.ndarray
 ) -> pd.DataFrame:
-    """Утилита: собрать long-format DataFrame из плотной матрицы скоров [n_users, n_items]."""
+    """Utility: build a long-format DataFrame from a dense score matrix [n_users, n_items]."""
     n_u, n_i = len(user_ids), len(cold_item_ids)
     if scores.shape != (n_u, n_i):
         raise ValueError(f"scores.shape={scores.shape} != ({n_u}, {n_i})")
@@ -129,7 +129,7 @@ def cross_join_frame(
     )
 
 
-#: Глобальный реестр методов.
+#: Global method registry.
 methods: Registry[type[ColdStartMethod]] = Registry("method")
 
 
@@ -137,10 +137,10 @@ _M = TypeVar("_M", bound=ColdStartMethod)
 
 
 def register_method(name: str) -> Callable[[type[_M]], type[_M]]:
-    """Декоратор регистрации метода под именем ``name`` (проставляет ``cls.name``).
+    """Decorator that registers a method under ``name`` (sets ``cls.name``).
 
-    Сохраняет конкретный тип класса (не схлопывает к базовому), чтобы pyright видел
-    сигнатуру ``__init__`` подкласса.
+    Preserves the concrete class type (does not collapse it to the base) so that pyright
+    sees the subclass ``__init__`` signature.
     """
 
     def decorator(cls: type[_M]) -> type[_M]:

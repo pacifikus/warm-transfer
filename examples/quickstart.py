@@ -1,8 +1,8 @@
-"""Минимальный plug&play пример warmtransfer без warmtransfer.bench.
+"""Minimal plug&play warmtransfer example without warmtransfer.bench.
 
-Пользователь приносит warm-скоры уже обученного донора и контент warm/cold айтемов.
-LinMap учит отображение "контент -> вектор скоров по пользователям" и предсказывает
-скоры для новых айтемов.
+The user brings warm scores from an already trained donor and content for warm/cold items.
+LinMap learns a mapping "content -> vector of per-user scores" and predicts
+scores for new items.
 """
 
 from __future__ import annotations

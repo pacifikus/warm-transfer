@@ -1,4 +1,4 @@
-"""Тесты AUC: known-answer, ties, один класс, сверка с sklearn."""
+"""AUC tests: known-answer, ties, single class, cross-check against sklearn."""
 
 from __future__ import annotations
 
@@ -40,4 +40,4 @@ def test_auc_matches_sklearn() -> None:
 def test_rela_impr() -> None:
     # (0.7-0.5)/(0.6-0.5) - 1 = 2 - 1 = 1.0
     assert rela_impr(0.7, 0.6) == pytest.approx(1.0)
-    assert math.isnan(rela_impr(0.7, 0.5))  # бейзлайн на уровне случайного
+    assert math.isnan(rela_impr(0.7, 0.5))  # baseline at the random level

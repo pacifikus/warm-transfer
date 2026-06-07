@@ -1,16 +1,16 @@
-"""Stacking+: мета-модель над сильным сигналом LinMap + персонализированной популярностью.
+"""Stacking+: meta-model over the strong LinMap signal + personalized popularity.
 
-Мотивация (из бенчмарка): LinMap выигрывает по ранжированию, но на популярностно-
-доминируемых доменах (Goodbooks) персонализированный Grouped MP сильнее в top-k. Базовый
-``stacking`` использует слабый knn-сигнал донора и не дотягивает до LinMap. Здесь мета-логрег
-обучается над тремя сигналами:
+Motivation (from the benchmark): LinMap wins on ranking, but in popularity-
+dominated domains (Goodbooks) the personalized Grouped MP is stronger in top-k. The base
+``stacking`` uses the donor's weak knn signal and falls short of LinMap. Here a meta logreg
+is trained over three signals:
 
-  1. ``linmap`` — Ridge content→скоры донора (сильное ранжирование, перенос латентной структуры);
-  2. ``genre affinity`` — аффинность юзера к жанрам айтема (силён в top-k на популярных доменах);
-  3. ``genre popularity`` — глобальная популярность жанров (бейзлайн как фича).
+  1. ``linmap`` — Ridge content→donor scores (strong ranking, transfer of latent structure);
+  2. ``genre affinity`` — user's affinity to the item's genres (strong in top-k on popular domains);
+  3. ``genre popularity`` — global genre popularity (baseline used as a feature).
 
-Веса подбираются логистической регрессией на val-cold фолде (факт взаимодействия как target),
-поэтому метод адаптивно берёт лучшее из обоих миров и должен быть робастен по доменам.
+Weights are fit by logistic regression on the val-cold fold (interaction fact as target),
+so the method adaptively takes the best of both worlds and should be robust across domains.
 """
 
 from __future__ import annotations
@@ -27,10 +27,10 @@ from warmtransfer.types import ItemFeatures, TransferInputs
 
 @register_method("stacking_plus")
 class StackingPlus(ColdStartMethod):
-    """Мета-логрег над [linmap, genre_affinity, genre_popularity], обучение на val-cold.
+    """Meta logreg over [linmap, genre_affinity, genre_popularity], trained on val-cold.
 
-    :param alpha: L2-регуляризация внутреннего Ridge (linmap-сигнал).
-    :param C_reg: обратная регуляризация мета-логрегрессии.
+    :param alpha: L2 regularization of the inner Ridge (linmap signal).
+    :param C_reg: inverse regularization of the meta logistic regression.
     """
 
     requires = frozenset({"donor_scores", "content", "train_interactions", "val"})
@@ -48,18 +48,18 @@ class StackingPlus(ColdStartMethod):
         cold = _req(inputs.cold_features, "cold_features")
         val_cold = _req(inputs.val_cold_features, "val_cold_features")
         if inputs.val_interactions is None:
-            raise ValueError("stacking_plus требует val_interactions")
+            raise ValueError("stacking_plus requires val_interactions")
 
         warm_mat = np.asarray(warm.matrix, dtype=float)
         warm_ids = np.asarray(warm.item_ids)
 
-        # --- внутренний LinMap: Ridge content -> скоры донора [n_warm, n_users] ---
+        # --- inner LinMap: Ridge content -> donor scores [n_warm, n_users] ---
         targets, self._user_ids = _pivot_scores_t(inputs.donor_scores, warm_ids)
         self._u_pos = {u: i for i, u in enumerate(self._user_ids)}
         self._ridge = Ridge(alpha=self.alpha)
         self._ridge.fit(np.asarray(_dense(warm_mat), dtype=float), targets)
 
-        # --- персонализированная популярность ---
+        # --- personalized popularity ---
         self._affinity = _user_genre_affinity(
             inputs.train_interactions, warm_ids, warm_mat, self._u_pos
         )
@@ -68,7 +68,7 @@ class StackingPlus(ColdStartMethod):
 
         self._cold = cold
 
-        # --- обучение меты на val-cold ---
+        # --- training the meta on val-cold ---
         x_val = self._features(val_cold, self._user_ids)
         y_val = _labels(inputs.val_interactions, self._user_ids, val_cold.item_ids)
         self._scaler = StandardScaler().fit(x_val)
@@ -87,18 +87,18 @@ class StackingPlus(ColdStartMethod):
         return cross_join_frame(user_ids, cold_item_ids, scores)
 
     def _features(self, item_feats: ItemFeatures, users: np.ndarray) -> np.ndarray:
-        """Три сигнала для всех пар (users × item_feats), сплющенные в [n*m, 3]."""
+        """Three signals for all pairs (users × item_feats), flattened into [n*m, 3]."""
         item_mat = np.asarray(item_feats.matrix, dtype=float)  # [m, n_genres]
         x_items = np.asarray(_dense(item_mat), dtype=float)
 
-        # linmap-сигнал: Ridge.predict даёт [m, n_users_all]; выбрать наших юзеров
+        # linmap signal: Ridge.predict gives [m, n_users_all]; select our users
         pred = np.asarray(self._ridge.predict(x_items))  # [m, n_users_all]
         cols = np.array([self._u_pos.get(u, -1) for u in users])
         known = cols >= 0
         linmap = np.zeros((len(users), item_mat.shape[0]))  # [n_users, m]
         linmap[known] = pred[:, cols[known]].T
 
-        # персонализированная аффинность и глобальная популярность
+        # personalized affinity and global popularity
         aff = np.zeros((len(users), self._affinity.shape[1]))
         aff[known] = self._affinity[cols[known]]
         aff_score = aff @ item_mat.T  # [n_users, m]
@@ -114,5 +114,5 @@ class StackingPlus(ColdStartMethod):
 
 def _req(feats: ItemFeatures | None, what: str) -> ItemFeatures:
     if feats is None:
-        raise ValueError(f"stacking_plus требует {what}")
+        raise ValueError(f"stacking_plus requires {what}")
     return feats

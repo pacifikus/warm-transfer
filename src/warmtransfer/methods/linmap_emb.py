@@ -1,15 +1,16 @@
-"""Отображение контента айтема в латентные факторы донора (Gantner, ICDM 2010).
+"""Mapping of item content to the donor's latent factors (Gantner, ICDM 2010).
 
-Embedding-версия ``linmap``: вместо ``контент → скор`` учим Ridge ``контент → эмбеддинг
-донора``. По warm-айтемам известны и контент, и факторы донора — обучаем регрессию
-``content → item_factors``. Для cold-айтема применяем её к контенту, получаем оценку его
-вектора факторов, затем скор пары (user, cold_item) = ``user_emb · cold_emb``.
+Embedding version of ``linmap``: instead of ``content -> score`` we train a Ridge
+``content -> donor embedding``. For warm items both content and donor factors are known,
+so we fit the regression ``content -> item_factors``. For a cold item we apply it to the
+content, obtain an estimate of its factor vector, then the score of a (user, cold_item)
+pair = ``user_emb . cold_emb``.
 
-Отличие от ``linmap`` (контент→скор): целевая переменная — латентные факторы, а не вектор
-скоров по пользователям. Это классический attribute-to-feature mapping; нужен доступ к
-эмбеддингам донора ([EMB]).
+Difference from ``linmap`` (content -> score): the target variable is the latent factors,
+not the vector of scores across users. This is the classic attribute-to-feature mapping;
+it requires access to the donor's embeddings ([EMB]).
 
-Ссылка: Gantner et al., "Learning Attribute-to-Feature Mappings for Cold-Start
+Reference: Gantner et al., "Learning Attribute-to-Feature Mappings for Cold-Start
 Recommendations", ICDM 2010.
 """
 
@@ -26,9 +27,9 @@ from warmtransfer.types import TransferInputs
 
 @register_method("linmap_emb")
 class LinMapEmbedding(ColdStartMethod):
-    """Ridge-отображение контент → латентные факторы донора (Gantner).
+    """Ridge mapping of content -> donor latent factors (Gantner).
 
-    :param alpha: коэффициент L2-регуляризации Ridge.
+    :param alpha: L2 regularization coefficient of Ridge.
     """
 
     requires = frozenset({"embeddings", "content"})
@@ -39,13 +40,13 @@ class LinMapEmbedding(ColdStartMethod):
 
     def _fit(self, inputs: TransferInputs, seed: int) -> None:
         if inputs.warm_features is None or inputs.cold_features is None:
-            raise ValueError(f"{self.name} требует warm_features и cold_features")
+            raise ValueError(f"{self.name} requires warm_features and cold_features")
         if inputs.embeddings is None:
-            raise ValueError(f"{self.name} требует embeddings")
+            raise ValueError(f"{self.name} requires embeddings")
         emb = inputs.embeddings
         for key in ("item", "item_ids", "user", "user_ids"):
             if key not in emb:
-                raise ValueError(f"embeddings: отсутствует ключ {key!r}")
+                raise ValueError(f"embeddings: missing key {key!r}")
 
         item_emb = np.asarray(emb["item"], dtype=float)  # [m, d]
         item_emb_ids = np.asarray(emb["item_ids"])  # [m]
@@ -55,10 +56,10 @@ class LinMapEmbedding(ColdStartMethod):
 
         warm_ids = np.asarray(inputs.warm_features.item_ids)
         emb_pos = {it: j for j, it in enumerate(item_emb_ids)}
-        # оставляем только warm-айтемы, у которых есть и контент, и эмбеддинг
+        # keep only warm items that have both content and an embedding
         keep = np.array([it in emb_pos for it in warm_ids])
         if not keep.any():
-            raise ValueError(f"{self.name}: нет warm-айтемов с контентом и эмбеддингом")
+            raise ValueError(f"{self.name}: no warm items with both content and embedding")
         warm_kept = warm_ids[keep]
         emb_rows = np.array([emb_pos[it] for it in warm_kept])
 
@@ -68,10 +69,10 @@ class LinMapEmbedding(ColdStartMethod):
         self._model = Ridge(alpha=self.alpha)
         self._model.fit(x_warm, y_warm)
 
-        # средняя магнитуда warm-эмбеддингов — нужна наследнику (magnitude scaling)
+        # mean magnitude of warm embeddings - needed by the subclass (magnitude scaling)
         self._warm_mean_norm = float(np.linalg.norm(y_warm, axis=1).mean())
 
-        # оценка факторов всех cold-айтемов [n_cold, d]
+        # estimated factors of all cold items [n_cold, d]
         self._cold_ids = np.asarray(inputs.cold_features.item_ids)
         self._cold_pos = {it: r for r, it in enumerate(self._cold_ids)}
         x_cold = np.asarray(_dense(inputs.cold_features.matrix), dtype=float)
@@ -79,7 +80,7 @@ class LinMapEmbedding(ColdStartMethod):
         self._postprocess_cold_emb()
 
     def _postprocess_cold_emb(self) -> None:
-        """Хук для наследников (magnitude scaling). По умолчанию ничего не делает."""
+        """Hook for subclasses (magnitude scaling). Does nothing by default."""
 
     def predict(self, user_ids: np.ndarray, cold_item_ids: np.ndarray) -> pd.DataFrame:
         self._check_fitted()

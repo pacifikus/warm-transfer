@@ -1,4 +1,4 @@
-"""Тест stacking: обучается на val-cold и переносит персонализацию на test-cold."""
+"""Stacking test: trains on val-cold and transfers personalization to test-cold."""
 
 from __future__ import annotations
 
@@ -37,12 +37,12 @@ def _inputs() -> TransferInputs:
             C.Score: [0.9, 0.8, 0.1, 0.2, 0.1, 0.2, 0.9, 0.8],
         }
     )
-    # similarity по one-hot жанрам: g0-айтем похож на warm 10,11; g1 — на 12,13
+    # similarity by one-hot genres: g0 item is similar to warm 10,11; g1 to 12,13
     sim_g0 = [1.0, 1.0, 0.0, 0.0]
     sim_g1 = [0.0, 0.0, 1.0, 1.0]
     similarity = np.array([sim_g0, sim_g1])      # cold [30(g0), 31(g1)]
     val_similarity = np.array([sim_g0, sim_g1])  # val  [20(g0), 21(g1)]
-    # user1 взаимодействовал с val g0 (20), user2 — с val g1 (21)
+    # user1 interacted with val g0 (20), user2 with val g1 (21)
     val_inter = pd.DataFrame({C.User: [1, 2], C.Item: [20, 21], C.Weight: 1.0, C.Datetime: 0})
 
     return TransferInputs(
@@ -63,7 +63,7 @@ def test_stacking_personalizes() -> None:
     m = StackingTransfer(k=4).fit(_inputs(), seed=0)
     reco = m.predict(np.array([1, 2]), np.array([30, 31]))
     pivot = reco.pivot(index=C.User, columns=C.Item, values=C.Score)
-    # user1 (любит g0) выше скорит cold g0 (30); user2 (g1) — cold g1 (31)
+    # user1 (likes g0) scores cold g0 (30) higher; user2 (g1) scores cold g1 (31) higher
     assert pivot.loc[1, 30] > pivot.loc[1, 31]
     assert pivot.loc[2, 31] > pivot.loc[2, 30]
 

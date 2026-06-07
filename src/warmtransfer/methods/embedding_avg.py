@@ -1,9 +1,9 @@
-"""Наивное усреднение эмбеддингов контентных соседей.
+"""Naive averaging of content-neighbor embeddings.
 
-Эмбеддинг cold-айтема строится как среднее эмбеддингов его k ближайших по контенту
-warm-соседей; скор пары (user, cold_item) = скалярное произведение эмбеддинга
-пользователя на эмбеддинг cold-айтема. Идея: перенести cold-айтем в латентное
-пространство донора через известные warm-соседей и оценивать через user-эмбеддинги.
+The embedding of a cold item is built as the mean of the embeddings of its k nearest
+warm neighbors by content; the score of a (user, cold_item) pair is the dot product of the
+user embedding and the cold-item embedding. The idea: transfer the cold item into the donor's
+latent space via known warm neighbors and score it through the user embeddings.
 """
 
 from __future__ import annotations
@@ -17,9 +17,9 @@ from warmtransfer.types import TransferInputs
 
 @register_method("embedding_avg")
 class EmbeddingAverage(ColdStartMethod):
-    """Скоры через усреднённые эмбеддинги контентных warm-соседей.
+    """Scores via averaged embeddings of content warm-neighbors.
 
-    :param k: число ближайших warm-соседей для усреднения эмбеддингов.
+    :param k: number of nearest warm-neighbors to average embeddings over.
     """
 
     requires = frozenset({"embeddings", "similarity", "content"})
@@ -30,16 +30,16 @@ class EmbeddingAverage(ColdStartMethod):
 
     def _fit(self, inputs: TransferInputs, seed: int) -> None:
         if inputs.warm_features is None or inputs.cold_features is None:
-            raise ValueError("embedding_avg требует warm_features и cold_features")
+            raise ValueError("embedding_avg requires warm_features and cold_features")
         if inputs.similarity is None:
-            raise ValueError("embedding_avg требует similarity [n_cold, n_warm]")
+            raise ValueError("embedding_avg requires similarity [n_cold, n_warm]")
         if inputs.embeddings is None:
-            raise ValueError("embedding_avg требует embeddings")
+            raise ValueError("embedding_avg requires embeddings")
 
         emb = inputs.embeddings
         for key in ("item", "item_ids", "user", "user_ids"):
             if key not in emb:
-                raise ValueError(f"embeddings: отсутствует ключ {key!r}")
+                raise ValueError(f"embeddings: missing key {key!r}")
 
         item_emb = np.asarray(emb["item"], dtype=float)  # [m, d]
         item_emb_ids = np.asarray(emb["item_ids"])  # [m]
@@ -47,25 +47,25 @@ class EmbeddingAverage(ColdStartMethod):
         user_emb_ids = np.asarray(emb["user_ids"])  # [p]
         self._user_pos = {u: i for i, u in enumerate(user_emb_ids)}
 
-        warm_ids = np.asarray(inputs.warm_features.item_ids)  # столбцы similarity
-        self._cold_ids = np.asarray(inputs.cold_features.item_ids)  # строки similarity
+        warm_ids = np.asarray(inputs.warm_features.item_ids)  # similarity columns
+        self._cold_ids = np.asarray(inputs.cold_features.item_ids)  # similarity rows
         self._cold_pos = {it: r for r, it in enumerate(self._cold_ids)}
 
-        # позиция warm-айтема в item_emb по его внешнему id
+        # position of a warm item in item_emb by its external id
         emb_pos = {it: j for j, it in enumerate(item_emb_ids)}
-        # warm-позиция (столбец similarity) -> строка в item_emb (или -1, если эмбеддинга нет)
+        # warm position (similarity column) -> row in item_emb (or -1 if no embedding)
         warm_to_emb = np.array([emb_pos.get(it, -1) for it in warm_ids])
 
         sim = np.asarray(inputs.similarity, dtype=float)  # [n_cold, n_warm]
         kk = min(self.k, sim.shape[1])
         d = item_emb.shape[1]
 
-        # для каждого cold-айтема: среднее эмбеддингов k ближайших warm-соседей
+        # for each cold item: mean embedding of its k nearest warm-neighbors
         self._cold_emb = np.zeros((len(self._cold_ids), d))
         for r, row in enumerate(sim):
             idx = np.argpartition(-row, kk - 1)[:kk]
             emb_rows = warm_to_emb[idx]
-            emb_rows = emb_rows[emb_rows >= 0]  # соседи без эмбеддинга пропускаем
+            emb_rows = emb_rows[emb_rows >= 0]  # skip neighbors without an embedding
             if emb_rows.size:
                 self._cold_emb[r] = item_emb[emb_rows].mean(axis=0)
 
@@ -74,13 +74,13 @@ class EmbeddingAverage(ColdStartMethod):
         user_ids = np.asarray(user_ids)
         cold_item_ids = np.asarray(cold_item_ids)
 
-        # эмбеддинги запрошенных пользователей (неизвестный юзер -> нулевой вектор)
+        # embeddings of the requested users (unknown user -> zero vector)
         rows = np.array([self._user_pos.get(u, -1) for u in user_ids])
         known = rows >= 0
         u_emb = np.zeros((len(user_ids), self._user_emb.shape[1]))
         u_emb[known] = self._user_emb[rows[known]]
 
-        # эмбеддинги запрошенных cold-айтемов (неизвестный айтем -> нулевой вектор)
+        # embeddings of the requested cold items (unknown item -> zero vector)
         c_rows = np.array([self._cold_pos.get(it, -1) for it in cold_item_ids])
         c_known = c_rows >= 0
         c_emb = np.zeros((len(cold_item_ids), self._cold_emb.shape[1]))

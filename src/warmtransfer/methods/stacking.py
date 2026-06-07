@@ -1,17 +1,18 @@
-"""Stacking: мета-модель поверх базовых сигналов, обучаемая на val-cold фолде.
+"""Stacking: a meta-model on top of base signals, trained on the val-cold fold.
 
-Главный кандидат обойти сильный бейзлайн (персонализированный Grouped MP). Идея: для
-каждой пары (user, cold_item) считаем несколько дешёвых сигналов и обучаем логистическую
-регрессию предсказывать факт взаимодействия — НА VAL-COLD ФОЛДЕ (айтемы, которых нет в
-train донора, но с известными взаимодействиями). Затем применяем к тестовым cold-айтемам.
+The main candidate to beat a strong baseline (personalized Grouped MP). The idea: for
+each (user, cold_item) pair we compute several cheap signals and train a logistic
+regression to predict the fact of interaction — ON THE VAL-COLD FOLD (items absent from
+the donor's train, but with known interactions). Then we apply it to the test cold items.
 
-Сигналы (все leak-free, считаются из train + статичный контент + скоры донора):
-  1. personalized genre affinity — аффинность юзера к жанрам айтема (как grouped_most_popular_pers);
-  2. global genre popularity — популярность жанров айтема (как grouped_most_popular);
-  3. knn donor score — взвешенный по контентному сходству скор донора по соседям.
+Signals (all leak-free, computed from train + static content + donor scores):
+  1. personalized genre affinity — user's affinity to the item's genres
+     (like grouped_most_popular_pers);
+  2. global genre popularity — popularity of the item's genres (like grouped_most_popular);
+  3. knn donor score — donor score over neighbors, weighted by content similarity.
 
-Так бейзлайн используется КАК ФИЧА (а не конкурент), плюс добавляется персонализированный
-сигнал донора — поэтому stacking почти гарантированно ≥ Grouped MP.
+This way the baseline is used AS A FEATURE (not a competitor), plus a personalized donor
+signal is added — so stacking is almost guaranteed to be >= Grouped MP.
 """
 
 from __future__ import annotations
@@ -29,10 +30,10 @@ from warmtransfer.types import ItemFeatures, TransferInputs
 
 @register_method("stacking")
 class StackingTransfer(ColdStartMethod):
-    """Мета-логрегрессия на сигналах [affinity, genre_pop, knn], обучаемая на val-cold.
+    """Meta logistic regression on signals [affinity, genre_pop, knn], trained on val-cold.
 
-    :param k: число контентных соседей для knn-сигнала.
-    :param C_reg: обратная регуляризация логистической регрессии.
+    :param k: number of content neighbors for the knn signal.
+    :param C_reg: inverse regularization of the logistic regression.
     """
 
     requires = frozenset({"donor_scores", "content", "train_interactions", "similarity", "val"})
@@ -50,24 +51,24 @@ class StackingTransfer(ColdStartMethod):
         cold = _req(inputs.cold_features, "cold_features")
         val_cold = _req(inputs.val_cold_features, "val_cold_features")
         if inputs.similarity is None or inputs.val_similarity is None:
-            raise ValueError("stacking требует similarity и val_similarity")
+            raise ValueError("stacking requires similarity and val_similarity")
         if inputs.val_interactions is None:
-            raise ValueError("stacking требует val_interactions")
+            raise ValueError("stacking requires val_interactions")
 
         warm_mat = np.asarray(warm.matrix, dtype=float)
 
-        # пользователи = столбцы матрицы скоров донора
+        # users = columns of the donor score matrix
         self._users = unique_sorted(inputs.donor_scores[C.User])
         self._u_pos = {u: i for i, u in enumerate(self._users)}
 
-        # матрица скоров донора D [n_users, n_warm], выровнена по warm.item_ids
+        # donor score matrix D [n_users, n_warm], aligned to warm.item_ids
         self._donor = _pivot_donor(inputs.donor_scores, warm.item_ids, self._users, self._u_pos)
 
-        # аффинность юзера к жанрам [n_users, n_genres] по train (только наши пользователи)
+        # user affinity to genres [n_users, n_genres] from train (only our users)
         self._affinity = _user_genre_affinity(
             inputs.train_interactions, warm.item_ids, warm_mat, self._u_pos
         )
-        # глобальная популярность жанров [n_genres]
+        # global genre popularity [n_genres]
         warm_pop = _warm_popularity(inputs.train_interactions, warm.item_ids)
         self._genre_pop = warm_mat.T @ warm_pop
 
@@ -75,7 +76,7 @@ class StackingTransfer(ColdStartMethod):
         self._cold_sim = np.asarray(inputs.similarity, dtype=float)
         self._cold_pos = {it: r for r, it in enumerate(cold.item_ids)}
 
-        # --- обучающая выборка на val-cold ---
+        # --- training sample on val-cold ---
         val_sim = np.asarray(inputs.val_similarity, dtype=float)
         x_val = self._features(val_cold, val_sim, self._users)  # [n_users*n_val, 3]
         y_val = _labels(inputs.val_interactions, self._users, val_cold.item_ids)
@@ -101,7 +102,7 @@ class StackingTransfer(ColdStartMethod):
     def _features(
         self, item_feats: ItemFeatures, sim: np.ndarray, users: np.ndarray
     ) -> np.ndarray:
-        """Три сигнала для всех пар (users × item_feats), сплющенные в [n*m, 3]."""
+        """Three signals for all (users × item_feats) pairs, flattened into [n*m, 3]."""
         item_mat = np.asarray(item_feats.matrix, dtype=float)  # [m, n_genres]
         u_rows = np.array([self._u_pos.get(u, -1) for u in users])
         known = u_rows >= 0
@@ -123,25 +124,25 @@ class StackingTransfer(ColdStartMethod):
         return {"k": self.k, "C_reg": self.C_reg}
 
 
-# --- внутренние утилиты ---
+# --- internal utilities ---
 
 
 def _req(feats: ItemFeatures | None, what: str) -> ItemFeatures:
     if feats is None:
-        raise ValueError(f"stacking требует {what}")
+        raise ValueError(f"stacking requires {what}")
     return feats
 
 
 def _pivot_donor(
     donor_scores: pd.DataFrame, warm_ids: np.ndarray, users: np.ndarray, u_pos: dict
 ) -> np.ndarray:
-    """Скоры донора в матрицу [n_users, n_warm], выровненную по warm_ids и users."""
+    """Donor scores into a matrix [n_users, n_warm], aligned to warm_ids and users."""
     w_pos = {it: j for j, it in enumerate(warm_ids)}
     extra = set(unique_sorted(donor_scores[C.Item]).tolist()) - set(w_pos)
     if extra:
         raise ValueError(
-            f"donor_scores содержат не-warm айтемы ({len(extra)} шт.) — нарушение "
-            "warm-only контракта: stacking должен учиться только на warm-скорах"
+            f"donor_scores contain non-warm items ({len(extra)}) — violation of the "
+            "warm-only contract: stacking must be trained only on warm scores"
         )
     matrix = np.zeros((len(users), len(warm_ids)))
     rows = map_codes(donor_scores[C.User], u_pos)
@@ -158,7 +159,7 @@ def _warm_popularity(train: pd.DataFrame, warm_ids: np.ndarray) -> np.ndarray:
 def _user_genre_affinity(
     train: pd.DataFrame, warm_ids: np.ndarray, warm_mat: np.ndarray, u_pos: dict
 ) -> np.ndarray:
-    """[n_users, n_genres]: сколько раз юзер взаимодействовал с айтемами каждого жанра."""
+    """[n_users, n_genres]: how many times a user interacted with items of each genre."""
     w_pos = {it: j for j, it in enumerate(warm_ids)}
     mask = train[C.User].isin(list(u_pos)) & train[C.Item].isin(list(w_pos))
     sub = cast("pd.DataFrame", train[mask])
@@ -170,7 +171,7 @@ def _user_genre_affinity(
 
 
 def _knn_scores(donor: np.ndarray, sim: np.ndarray, k: int) -> np.ndarray:
-    """Взвешенный по сходству скор донора по top-k контентным соседям. [n_users, n_items]."""
+    """Similarity-weighted donor score over top-k content neighbors. [n_users, n_items]."""
     n_users = donor.shape[0]
     n_items, n_warm = sim.shape
     kk = min(k, n_warm)
@@ -187,7 +188,7 @@ def _knn_scores(donor: np.ndarray, sim: np.ndarray, k: int) -> np.ndarray:
 
 
 def _labels(val_interactions: pd.DataFrame, users: np.ndarray, items: np.ndarray) -> np.ndarray:
-    """Метки 1/0 для пар (users × items) в порядке flatten (user-major)."""
+    """1/0 labels for (users × items) pairs in flatten order (user-major)."""
     pos = set(zip(val_interactions[C.User], val_interactions[C.Item], strict=True))
     labels = np.zeros((len(users), len(items)), dtype=int)
     for ui, u in enumerate(users):
