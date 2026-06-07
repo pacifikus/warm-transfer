@@ -1,9 +1,9 @@
-# Add your own method
+# Как добавить свой метод
 
-A transfer method receives `TransferInputs`, declares what fields it needs, and predicts scores for
-cold items.
+Transfer method получает `TransferInputs`, объявляет нужные поля и предсказывает scores для cold
+items.
 
-## Minimal method
+## Минимальный метод
 
 ```python
 import numpy as np
@@ -32,9 +32,9 @@ class ConstantZero(ColdStartMethod):
         )
 ```
 
-## Declare inputs
+## Объявите inputs
 
-Set `requires` to the fields your method actually needs:
+Поставьте в `requires` поля, которые реально нужны методу:
 
 - `donor_scores`
 - `content`
@@ -44,15 +44,15 @@ Set `requires` to the fields your method actually needs:
 - `item_meta`
 - `val`
 
-The base class validates them before `_fit` runs.
+Base class проверит их до `_fit`.
 
-## Make it discoverable
+## Сделайте метод discoverable
 
-Import the module from `warmtransfer.methods.__init__` so `@register_method(...)` runs. Then add a
-unit test that fits the method on a tiny `TransferInputs` fixture and verifies the output columns and
-shape.
+Импортируйте module из `warmtransfer.methods.__init__`, чтобы `@register_method(...)` выполнился.
+Затем добавьте unit test, который fit-ит метод на маленьком `TransferInputs` fixture и проверяет
+output columns и shape.
 
-## Use it in benchmark config
+## Используйте в benchmark config
 
 ```yaml
 methods:
