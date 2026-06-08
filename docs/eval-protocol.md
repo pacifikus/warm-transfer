@@ -3,6 +3,24 @@
 The main scientific risk of the project is leakage in cold-start evaluation. The protocol below + the
 splitter invariant tests guard against it.
 
+!!! danger "Anti-leakage invariant"
+    Test-cold items must be absent from donor training, validation features used for tuning,
+    popularity computation and neighbor construction. The donor scores used by transfer methods are
+    warm-only.
+
+```mermaid
+flowchart LR
+    A[All interactions] --> B[Pick pseudo-cold items]
+    B --> C[Train: warm items only]
+    B --> D[Val-cold: tune meta-methods]
+    B --> E[Test-cold: final metrics]
+    C --> F[Train donor]
+    F --> G[Warm donor scores]
+    G --> H[Transfer method]
+    D --> H
+    H --> E
+```
+
 ## Pseudo-cold split (how we do it)
 
 1. **Split by items, not by interactions.** We randomly (stratified) pick a subset of warm items,
@@ -52,6 +70,11 @@ an additional set of users).
   count calibration as a "transfer method".
 - We report the **spread over several seeds** (cold evaluation is noisy) and **over popularity buckets**
   of cold items.
+
+??? note "Why calibration is separated from ranking"
+    Monotone calibration can make scores better probabilities, but it preserves score order. Ranking
+    metrics and AUC are order-based, so calibration alone cannot turn a weak ranking method into a
+    strong cold-start transfer method.
 
 ## Metric conventions (we fix OUR OWN, not relying on third-party libs)
 

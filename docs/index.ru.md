@@ -1,93 +1,79 @@
 # warm-transfer
 
-**Model-agnostic plug&play библиотека** для переноса и калибровки скоров уже обученной
-рекомендательной модели на **новые (cold-start) айтемы** при экстремальной разреженности,
-плюс воспроизводимый **бенчмарк**.
+Переносит и калибрует скоры уже обученного рекомендателя на cold-start айтемы. Plug&play,
+model-agnostic, без переобучения донора.
 
-Идея: у вас есть обученная модель произвольной архитектуры — библиотека «накладывается»
-поверх её скоров и оценивает новые товары/контент, для которых ещё нет (или почти нет)
-взаимодействий. Модель переобучать не нужно, доступа к её внутренностям тоже.
+```python
+from warmtransfer.methods import LinMap
+
+reco = LinMap(alpha=1.0).fit(inputs, seed=42).predict(user_ids, cold_item_ids)
+```
+
+<div class="grid cards" markdown>
+
+-   :material-rocket-launch:{ .lg .middle } __Быстрый старт__
+
+    ---
+
+    Перенести скоры донора на cold items за пять минут.
+
+    [:octicons-arrow-right-24: Начать](getting-started/quickstart.md)
+
+-   :material-puzzle:{ .lg .middle } __Работает с вашими скорами__
+
+    ---
+
+    Принесите warm-item скоры любой модели. warm-transfer не переобучает донора.
+
+    [:octicons-arrow-right-24: Зачем](explanation/why.md)
+
+-   :material-chart-line:{ .lg .middle } __Бьёт сильные бейзлайны__
+
+    ---
+
+    Score transfer бьёт персонализированный Grouped MP в 36 из 40 ячеек dataset-donor.
+
+    [:octicons-arrow-right-24: Результаты](results/full_matrix.md)
+
+-   :material-book-open-variant:{ .lg .middle } __Методы и API__
+
+    ---
+
+    Семнадцать методов, один контракт `ColdStartMethod.fit(...).predict(...)`.
+
+    [:octicons-arrow-right-24: Справочник](methods.md)
+
+</div>
+
+## Какую проблему решает
+
+Ваш рекомендатель уже умеет скорить warm items, но у новых айтемов нет истории взаимодействий.
+warm-transfer использует warm-скоры и контент айтемов, чтобы предсказать скоры для cold-start items.
+Донором может быть ALS, BPR, CatBoost, EASE, two-tower модель или закрытая production-модель.
 
 ## Главный результат
 
-Model-agnostic методы **LinMap** (Ridge: контент → вектор скоров донора) и **stacking_plus**
-(гибрид: linmap-сигнал + персонализированная популярность) **обходят сильный персонализированный
-Grouped MP** на матрице **8 загрузчиков датасетов × 5 доноров** (seed=42):
+На текущей benchmark-матрице **8 dataset loaders × 5 donors** (seed=42) методы score transfer бьют
+сильный персонализированный бейзлайн `grouped_most_popular_pers` по **per-user AUC в 36 из 40
+dataset-donor ячеек**.
 
-- по **per-user AUC** — перенос скоров обходит бейзлайн в **36 из 40** ячеек датасет×донор (90%);
-- 4 промаха — в основном на ML-1M, где AUC бейзлайна (~0.72) и так высок;
-- пять доноров охватывают четыре семейства моделей (матричная факторизация als/bpr, GBDT catboost,
-  линейный item-item ease, нейросетевой two_tower) — это **ось разнообразия** для проверки, как
-  держится перенос на разных типах доноров, а не конкуренты для ранжирования.
+Главный контраст: наивный nearest-neighbor transfer часто наследует популярность соседей и проигрывает
+Grouped MP. Калиброванный transfer, особенно `linmap` и `stacking_plus`, сохраняет персонализацию из
+скоров донора и работает устойчивее. Бенчмарк покрывает matrix-factorization, GBDT, linear item-item и
+neural donors; 4 промаха в основном на ML-1M, где baseline AUC уже высокий.
 
-Наивные методы (KNN-усреднение, attention, embedding-avg) проигрывают бейзлайну — тянут
-популярность соседей. **Оговорка:** это один сид; прицельные многосидовые прогоны на пограничных
-ячейках ещё предстоят. Подробности и таблицы — в разделе [Результаты](results/full_matrix.md).
+Эти числа получены на одном seed. Точечные multi-seed прогоны для пограничных ячеек отслеживаются на
+страницах бенчмарка.
 
 ## Архитектура
 
-- **`warmtransfer`** — лёгкое ядро (plug&play): методы переноса, метрики, similarity.
-  Работает со скорами донора + контентом, ставится без тяжёлых recsys-зависимостей.
-- **`warmtransfer.bench`** — бенчмарк (extra `bench`): датасеты, честный сплиттер, доноры
-  (ALS/BPR/CatBoost/EASE/Two-Tower), runner.
+- **`warmtransfer`** — лёгкое ядро: методы переноса, метрики и content similarity.
+- **`warmtransfer.bench`** — optional benchmark layer: dataset loaders, splitters, donor adapters и
+  runner `warmbench`.
 
-## Быстрый старт (ядро)
+## Куда дальше
 
-```python
-import numpy as np
-import pandas as pd
-
-from warmtransfer.columns import Columns as C
-from warmtransfer.methods import LinMap
-from warmtransfer.types import ItemFeatures, TransferInputs
-
-warm_features = ItemFeatures(
-    item_ids=np.array([10, 11]),
-    matrix=np.array([[1.0, 0.0], [0.0, 1.0]]),
-    feature_names=["genre_action", "genre_drama"],
-)
-cold_features = ItemFeatures(
-    item_ids=np.array([20]),
-    matrix=np.array([[1.0, 0.0]]),
-    feature_names=["genre_action", "genre_drama"],
-)
-donor_scores = pd.DataFrame(
-    {
-        C.User: [1, 1, 2, 2],
-        C.Item: [10, 11, 10, 11],
-        C.Score: [5.0, 1.0, 1.0, 5.0],
-    }
-)
-
-inputs = TransferInputs(
-    donor_scores=donor_scores,
-    warm_features=warm_features,
-    cold_features=cold_features,
-)
-reco = LinMap(alpha=1.0).fit(inputs, seed=42).predict(
-    user_ids=np.array([1, 2]),
-    cold_item_ids=np.array([20]),
-)
-```
-
-Полный исполняемый пример: `examples/quickstart.py`.
-
-## Установка
-
-```bash
-uv sync                 # только ядро + dev
-uv sync --extra bench   # + движки доноров и бенчмарк
-uv sync --extra all     # + deep (torch)
-```
-
-## Проверка бенчмарка
-
-```bash
-uv run python examples/quickstart.py
-uv run warmbench --list-components
-uv run warmbench --config configs/example.yaml --dry-run
-uv run warmbench --config configs/example.yaml
-```
-
-См. [Методы](methods.md), [Датасеты](datasets.md), [Протокол оценки](eval-protocol.md),
-[API](api.md).
+- Если вы впервые в проекте: начните с [Quickstart](getting-started/quickstart.md).
+- Если подключаете свою модель: читайте [Plug in a donor](how-to/add-donor.md).
+- Если выбираете метод: используйте [capability matrix](methods.md).
+- Если проверяете научную корректность: читайте [evaluation protocol](eval-protocol.md).

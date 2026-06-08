@@ -3,6 +3,24 @@
 Главный научный риск проекта — утечки в оценке cold-start. Протокол ниже + тесты-инварианты
 сплиттера защищают от них.
 
+!!! danger "Anti-leakage invariant"
+    Test-cold айтемы должны отсутствовать в donor training, validation features для tuning,
+    popularity computation и neighbor construction. Donor scores, которые используют transfer methods,
+    считаются только по warm items.
+
+```mermaid
+flowchart LR
+    A[All interactions] --> B[Pick pseudo-cold items]
+    B --> C[Train: warm items only]
+    B --> D[Val-cold: tune meta-methods]
+    B --> E[Test-cold: final metrics]
+    C --> F[Train donor]
+    F --> G[Warm donor scores]
+    G --> H[Transfer method]
+    D --> H
+    H --> E
+```
+
 ## Pseudo-cold split (как делаем)
 
 1. **Сплит по айтемам, не по взаимодействиям.** Случайно (стратифицированно) выбираем
@@ -52,6 +70,11 @@
   считаем калибровку «методом трансфера».
 - Репортим **разброс по нескольким сидам** (cold-оценка шумная) и **по бакетам популярности**
   cold-айтемов.
+
+??? note "Почему calibration отделена от ranking"
+    Монотонная calibration может сделать scores лучшими вероятностями, но сохраняет порядок scores.
+    Ranking metrics и AUC зависят от порядка, поэтому calibration сама по себе не превращает слабый
+    ranking method в сильный cold-start transfer method.
 
 ## Соглашения метрик (фиксируем СВОИ, не полагаемся на чужие либы)
 

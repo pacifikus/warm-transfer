@@ -55,7 +55,7 @@ dev = [
     "pyright>=1.1.390",    # type checking from the CLI
 ]
 docs = [
-    "mkdocs-material>=9.5",          # documentation site theme
+    "mkdocs-material[imaging]>=9.5", # documentation site theme + social cards
     "mkdocstrings[python]>=0.26",    # auto API from docstrings
     "mkdocs-static-i18n>=1.2",       # bilingual pages (en/ru)
 ]

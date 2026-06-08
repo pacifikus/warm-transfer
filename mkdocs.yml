@@ -13,38 +13,72 @@ theme:
   name: material
   language: en
   palette:
-    - scheme: default
-      primary: indigo
-      accent: indigo
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Follow system theme
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
       toggle:
         icon: material/weather-night
         name: Dark mode
-    - scheme: slate
-      primary: indigo
-      accent: indigo
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
       toggle:
         icon: material/weather-sunny
         name: Light mode
   features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.indexes
     - navigation.sections
     - navigation.top
+    - toc.follow
     - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - search.suggest
     - search.highlight
+
+extra_css:
+  - stylesheets/extra.css
 
 nav:
   - Home: index.md
-  - Methods: methods.md
-  - Datasets: datasets.md
-  - Evaluation protocol: eval-protocol.md
-  - Results:
-      - Full matrix 3×3: results/full_matrix.md
+  - Getting started:
+      - Quickstart: getting-started/quickstart.md
+      - Installation: getting-started/installation.md
+      - Tutorial (MovieLens): getting-started/tutorial.md
+  - How-to:
+      - how-to/index.md
+      - Plug in a donor: how-to/add-donor.md
+      - Add your own method: how-to/add-method.md
+      - Run the benchmark: how-to/run-benchmark.md
+      - Choose a method: how-to/choose-method.md
+  - Concepts:
+      - explanation/index.md
+      - Why warm-transfer: explanation/why.md
+      - Popularity bias & Grouped MP: explanation/popularity-bias.md
+      - Method families: explanation/methods-families.md
+      - Evaluation protocol: eval-protocol.md
+      - Glossary: explanation/glossary.md
+  - Reference:
+      - Methods (capability matrix): methods.md
+      - Contracts & types: reference/contracts.md
+      - Datasets: datasets.md
+      - API: api.md
+  - Benchmark:
+      - Main results (8×5): results/full_matrix.md
       - Seed variance: results/seeds.md
-      - Deep / [EMB]: results/deep.md
-      - KION text vs categories: results/kion_text.md
-  - API Reference: api.md
 
 plugins:
   - search
+  - social:
+      enabled: !ENV [CI, false]
   - i18n:
       docs_structure: suffix
       fallback_to_default: true
@@ -58,13 +92,29 @@ plugins:
           build: true
           nav_translations:
             Home: Главная
-            Methods: Методы
-            Datasets: Датасеты
+            Getting started: Начало работы
+            Quickstart: Быстрый старт
+            Installation: Установка
+            Tutorial (MovieLens): Туториал (MovieLens)
+            How-to: How-to
+            Plug in a donor: Как подключить донора
+            Add your own method: Как добавить свой метод
+            Run the benchmark: Как запустить бенчмарк
+            Choose a method: Как выбрать метод
+            Concepts: Концепции
+            Why warm-transfer: Зачем warm-transfer
+            Popularity bias & Grouped MP: Популярность и Grouped MP
+            Method families: Семейства методов
             Evaluation protocol: Протокол оценки
-            Results: Результаты
-            Full matrix 3×3: Полная матрица 3×3
+            Glossary: Глоссарий
+            Reference: Справочник
+            Methods (capability matrix): Методы (матрица возможностей)
+            Contracts & types: Контракты и типы
+            Datasets: Датасеты
+            API: API
+            Benchmark: Бенчмарк
+            Main results (8×5): Главные результаты (8×5)
             Seed variance: Разброс по сидам
-            KION text vs categories: KION текст vs категории
   - mkdocstrings:
       handlers:
         python:
@@ -74,10 +124,31 @@ plugins:
             show_source: false
             show_signature_annotations: true
             separate_signature: true
+            signature_crossrefs: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            summary: true
+            filters: ["!^_"]
 
 markdown_extensions:
   - admonition
-  - pymdownx.superfences
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets:
+      base_path: .
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight
   - tables
   - toc:
