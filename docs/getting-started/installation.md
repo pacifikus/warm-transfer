@@ -3,21 +3,23 @@
 warm-transfer has a lightweight core and optional extras for benchmark engines and neural methods.
 Python 3.11 or newer is required.
 
-=== "uv"
-
-    ```bash
-    uv sync                 # core + dev tools
-    uv sync --extra bench   # benchmark donors and dataset tooling
-    uv sync --extra all     # bench + deep extras
-    ```
-
 === "pip"
 
     ```bash
-    python -m pip install warm-transfer
-    python -m pip install "warm-transfer[bench]"
-    python -m pip install "warm-transfer[all]"
+    pip install warm-transfer            # core
+    pip install "warm-transfer[bench]"   # benchmark donors and dataset tooling
+    pip install "warm-transfer[all]"     # bench + deep extras
     ```
+
+=== "uv"
+
+    ```bash
+    uv add warm-transfer            # core
+    uv add "warm-transfer[bench]"   # benchmark donors and dataset tooling
+    uv add "warm-transfer[all]"     # bench + deep extras
+    ```
+
+The package is published on [PyPI](https://pypi.org/project/warm-transfer/).
 
 ## Variants
 
@@ -27,6 +29,16 @@ Python 3.11 or newer is required.
 | Benchmark | `warm-transfer[bench]` | donor engines, dataset downloads, parquet/YAML tooling and `warmbench` |
 | Deep | `warm-transfer[deep]` | `torch` for neural cold-start methods such as `dropoutnet` |
 | All | `warm-transfer[all]` | benchmark and deep dependencies |
+
+## From source (development)
+
+To work on warm-transfer itself, clone the repository and sync the environment:
+
+```bash
+uv sync                 # core + dev tools
+uv sync --extra bench   # + benchmark donors and dataset tooling
+uv sync --extra all     # + deep extras
+```
 
 ## Smoke checks
 

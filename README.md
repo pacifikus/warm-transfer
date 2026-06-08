@@ -2,6 +2,10 @@
 
 # warm-transfer
 
+[![PyPI](https://img.shields.io/pypi/v/warm-transfer.svg)](https://pypi.org/project/warm-transfer/)
+[![Python](https://img.shields.io/pypi/pyversions/warm-transfer.svg)](https://pypi.org/project/warm-transfer/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 **Model-agnostic plug&play library** for transferring and calibrating the scores of an
 already-trained recommendation model onto **new (cold-start) items** under extreme
 sparsity, plus a reproducible **benchmark**.
@@ -80,6 +84,16 @@ reco = LinMap(alpha=1.0).fit(inputs, seed=42).predict(
 Full runnable example: `examples/quickstart.py`.
 
 ## Installation
+
+```bash
+pip install warm-transfer            # core
+pip install "warm-transfer[bench]"   # + donor engines and benchmark
+pip install "warm-transfer[all]"     # + deep (torch)
+```
+
+Or with uv: `uv add warm-transfer`.
+
+From source (for development):
 
 ```bash
 uv sync                 # core + dev only
