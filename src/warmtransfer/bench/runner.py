@@ -12,6 +12,7 @@ from typing import cast
 import numpy as np
 import pandas as pd
 import psutil
+from tqdm.auto import tqdm
 
 # importing methods registers them in the registry
 from warmtransfer import methods as _methods_pkg  # noqa: F401
@@ -36,16 +37,28 @@ class BenchmarkRunner:
         self.config = config
 
     def run(self) -> list[dict]:
+        cfg = self.config
+        total = (
+            len(cfg.datasets)
+            * len(cfg.seeds)
+            * len(cfg.donors)
+            * len(cfg.methods)
+        )
         records: list[dict] = []
-        for dataset_name in self.config.datasets:
-            ds = datasets.get(dataset_name)().load()
-            for seed in self.config.seeds:
-                records.extend(self._run_one(ds, dataset_name, seed))
+        with tqdm(total=total, unit="cell", dynamic_ncols=True) as pbar:
+            for dataset_name in cfg.datasets:
+                pbar.set_description(f"{dataset_name} > loading dataset")
+                ds = datasets.get(dataset_name)().load()
+                for seed in cfg.seeds:
+                    records.extend(self._run_one(ds, dataset_name, seed, pbar))
         return records
 
-    def _run_one(self, ds: Dataset, dataset_name: str, seed: int) -> list[dict]:
+    def _run_one(
+        self, ds: Dataset, dataset_name: str, seed: int, pbar: tqdm
+    ) -> list[dict]:
         cfg = self.config
         process = psutil.Process()
+        pbar.set_description(f"{dataset_name} | seed {seed} > preparing split")
         splitter = splitters.get(cfg.splitter.name)(**cfg.splitter.params)
         split = splitter.split(ds, seed)
 
@@ -74,10 +87,13 @@ class BenchmarkRunner:
 
         records: list[dict] = []
         for donor_cfg in cfg.donors:
+            tag = f"{dataset_name} | seed {seed} | {donor_cfg.key}"
             donor = adapters.get(donor_cfg.name)(**donor_cfg.params)
+            pbar.set_description(f"{tag} > fitting donor")
             t0 = perf_counter()
             donor.fit(Dataset(split.train, warm_features, name=dataset_name), seed=seed)
             donor_fit_seconds = perf_counter() - t0
+            pbar.set_description(f"{tag} > scoring donor")
             t0 = perf_counter()
             donor_scores = donor.score(test_users, split.warm_items)
             donor_score_seconds = perf_counter() - t0
@@ -98,16 +114,15 @@ class BenchmarkRunner:
             )
 
             for method_cfg in cfg.methods:
+                pbar.set_description(f"{tag} > {method_cfg.key}")
                 method = methods.get(method_cfg.name)(**method_cfg.params)
                 try:
                     t0 = perf_counter()
                     method.fit(inputs, seed=seed)
                     method_fit_seconds = perf_counter() - t0
-                except MissingInputError as exc:
-                    print(
-                        f"[warmbench] skipping {method_cfg.key} on donor "
-                        f"{donor_cfg.key}: {exc}"
-                    )
+                except MissingInputError:
+                    # expected: [EMB] methods on donors without a latent space.
+                    pbar.update(1)
                     continue
                 t0 = perf_counter()
                 reco = method.predict(test_users, split.cold_items)
@@ -127,6 +142,7 @@ class BenchmarkRunner:
                         **metric_vals,
                     }
                 )
+                pbar.update(1)
         return records
 
     def _sample_test_users(self, split: SplitResult, seed: int) -> np.ndarray:

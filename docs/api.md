@@ -83,6 +83,15 @@ Automatically generated from docstrings (mkdocstrings).
 
 ## Benchmark
 
+::: warmtransfer.bench.adapters.base.ModelAdapter
+    options: { show_root_heading: true, heading_level: 3 }
+
+::: warmtransfer.bench.datasets.base.DatasetLoader
+    options: { show_root_heading: true, heading_level: 3 }
+
+::: warmtransfer.bench.splitters.base.Splitter
+    options: { show_root_heading: true, heading_level: 3 }
+
 ::: warmtransfer.bench.runner.BenchmarkRunner
     options: { show_root_heading: true, heading_level: 3 }
 

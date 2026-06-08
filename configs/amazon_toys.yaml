@@ -1,0 +1,35 @@
+# Smoke run for a new dataset: Amazon Toys × ALS × (baselines + content methods).
+# Goal — verify amazon-toys passes the whole pipeline end-to-end.
+
+datasets:
+  - amazon-toys
+
+donors:
+  - name: als
+    params:
+      factors: 64
+      regularization: 0.05
+      iterations: 20
+
+methods:
+  - name: random
+  - name: most_popular
+  - name: grouped_most_popular
+  - name: grouped_most_popular_pers
+  - name: knn_score_avg
+    params:
+      k: 20
+  - name: linmap
+
+splitter:
+  name: pseudo_cold
+  params:
+    cold_frac: 0.2
+    val_frac: 0.1
+    n_pop_buckets: 5
+    min_item_interactions: 5
+
+metrics_ks: [1, 5, 10]
+seeds: [42]
+max_eval_users: 2000
+out_dir: docs/results

@@ -1,10 +1,17 @@
-# Full matrix: 3 domains × 3 donors × all methods (seed=42).
-# embedding_avg ([EMB]) is automatically skipped on CatBoost (no embeddings).
+# Full matrix: 8 dataset loaders × 5 donors × all methods (seed=42).
+# The text axis (the -text variants) tests the contribution of the content modality on
+# the same interactions across all donors. [EMB] methods are automatically skipped on
+# donors without embeddings (catboost, ease).
 
 datasets:
   - ml-1m
   - goodbooks
   - kion
+  - kion-text
+  - amazon-toys
+  - amazon-toys-text
+  - mind
+  - mind-text
 
 donors:
   - name: als
@@ -23,6 +30,12 @@ donors:
       iterations: 100
       depth: 6
       neg_ratio: 4
+  - name: ease
+    params:
+      l2: 500.0
+  - name: two_tower
+    params:
+      epochs: 10
 
 methods:
   - name: random

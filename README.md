@@ -19,20 +19,23 @@ internals either.
   - `metrics/` — our own correct metrics (Recall/Precision/MAP/NDCG@k, MRR, AUC, RelaImpr)
   - `similarity/` — content similarity cold→warm (optional)
 - **`warmtransfer.bench`** — benchmark (heavy dependencies, extra `bench`).
-  - `datasets/` — loaders (ML-1M/20M, Goodbooks, KION, KION-text)
+  - `datasets/` — loaders (ML-1M/20M, Goodbooks, KION/KION-text, Amazon Toys/-text, MIND/-text)
   - `splitters/` — honest pseudo-cold split (anti-leakage)
-  - `adapters/` — donor models (ALS, BPR, CatBoost)
+  - `adapters/` — donor models (ALS, BPR, CatBoost, EASE, Two-Tower)
   - `runner.py` — running the matrix of datasets × donors × methods × baselines
 
 ## Key result
 
 The model-agnostic methods **LinMap** (Ridge: content → donor score vector) and **stacking_plus**
 (hybrid: linmap signal + personalized popularity) **beat the strong personalized
-Grouped MP** on the full matrix of **3 domains × 3 donors**: on AUC in 7 of 9 cells, and on ranking
-on ML-1M and KION with all donors. The gaps exceed the spread across 5 seeds. Naive methods
-(knn/attention/debiased/embedding_avg) lose to the baseline — they pull in neighbor popularity.
-DropoutNet (deep [EMB]) gives the best ranking on the dense ML-1M. Details and tables —
-`docs/results/full_matrix.md`.
+Grouped MP** across a matrix of **8 dataset loaders × 5 donors** (seed=42): score transfer beats
+the baseline on per-user AUC in **36 of 40** dataset×donor cells (90%). The 4 misses are mostly on
+ML-1M, where the baseline AUC (~0.72) is already strong. The five donors span four model families
+(matrix factorization als/bpr, GBDT catboost, linear item-item ease, neural two_tower) — they are a
+**diversity axis** for observing how transfer holds across donor types, not competitors to rank.
+Naive methods (knn/attention/debiased/embedding_avg) lose to the baseline — they pull in neighbor
+popularity. **Caveat:** these numbers are a single seed; targeted multi-seed runs on the marginal
+cells are still pending. Details and tables — `docs/results/full_matrix.md`.
 
 ## Plug&play usage (core, without the benchmark)
 
