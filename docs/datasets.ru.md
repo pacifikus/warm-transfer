@@ -7,7 +7,7 @@
 | Приоритет | Датасет | Домен | Размер (users / items / interactions) | Контент-фичи айтема | Feedback | Загрузка |
 |---|---|---|---|---|---|---|
 | 1 | **MTS KION** | фильмы/сериалы (RU) | 962K / 15.7K / 5.48M | жанры, страны, студии, описания (RU+EN) | implicit (watch %) | `github.com/irsafilo/KION_DATASET` (.zip CSV) |
-| 2 | **MovieLens-1M** | кино | 6K / 3.9K / 1M | жанры, год | explicit (ratings) | grouplens (.zip) — внешний бейзлайн GroupedMP AUC≈0.709 |
+| 2 | **MovieLens-1M** | кино | 6K / 3.9K / 1M | жанры, год | explicit (ratings) | grouplens (.zip) — внешний бейзлайн GroupedMP AUC≈0.709 (multi-seed mean 0.7082±0.007 по 5 seeds, см. `results/seeds.md`; ср. single-seed 0.7202 в `results/full_matrix.md`) |
 | 3 | **Goodbooks-10k** | книги | 53K / 10K / 6M | авторы, жанры (tags), год | explicit | zygmuntz/goodbooks-10k |
 | 4 | **Amazon Toys & Games** (5-core) | e-com | 19.4K / 11.9K / 168K | категории, бренд, TF-IDF(title/desc) | explicit (ratings) | SNAP 5-core (McAuley) |
 | 5 | **MIND** (MINDlarge) | новости (EN) | 750K / 19.2K / 3.93M | категория, подкатегория, TF-IDF(title/abstract) | implicit (клики) | HuggingFace `yjw1029/MIND` |

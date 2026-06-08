@@ -1,4 +1,6 @@
-# Full matrix: 8 dataset loaders × 5 donors × all methods (seed=42).
+# Full matrix: 8 dataset loaders × 5 donors × 12 core methods (seed=42).
+# The 5 embedding/scaling variants (attention_emb, dropoutnet, linmap_emb,
+# magnitude_scaling, scale_shift) are not part of this matrix.
 # The text axis (the -text variants) tests the contribution of the content modality on
 # the same interactions across all donors. [EMB] methods are automatically skipped on
 # donors without embeddings (catboost, ease).

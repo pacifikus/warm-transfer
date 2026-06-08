@@ -36,3 +36,8 @@ uv run warmbench --list-components
 ```
 
 Первая команда проверяет core package. Вторая проверяет benchmark entrypoint и registries.
+
+!!! note
+    `examples/quickstart.py` есть только в клоне репозитория; в pip-wheel он не упаковывается. При
+    установке через `pip` для smoke-check ядра используйте inline-сниппет со страницы
+    [Быстрый старт](quickstart.md).

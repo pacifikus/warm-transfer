@@ -37,3 +37,8 @@ uv run warmbench --list-components
 
 The first command checks the core package. The second checks that the benchmark entrypoint and
 registries are available.
+
+!!! note
+    `examples/quickstart.py` is only present in a repository clone; it is not shipped in the pip
+    wheel. For a `pip` install, use the inline snippet on the [Quickstart](quickstart.md) page to
+    smoke-check the core package instead.

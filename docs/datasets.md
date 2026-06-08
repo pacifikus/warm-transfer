@@ -7,7 +7,7 @@ content without interaction history.
 | Priority | Dataset | Domain | Size (users / items / interactions) | Item content features | Feedback | Loading |
 |---|---|---|---|---|---|---|
 | 1 | **MTS KION** | movies/series (RU) | 962K / 15.7K / 5.48M | genres, countries, studios, descriptions (RU+EN) | implicit (watch %) | `github.com/irsafilo/KION_DATASET` (.zip CSV) |
-| 2 | **MovieLens-1M** | cinema | 6K / 3.9K / 1M | genres, year | explicit (ratings) | grouplens (.zip) — external baseline GroupedMP AUC≈0.709 |
+| 2 | **MovieLens-1M** | cinema | 6K / 3.9K / 1M | genres, year | explicit (ratings) | grouplens (.zip) — external baseline GroupedMP AUC≈0.709 (multi-seed mean 0.7082±0.007 over 5 seeds, see `results/seeds.md`; cf. single-seed 0.7202 in `results/full_matrix.md`) |
 | 3 | **Goodbooks-10k** | books | 53K / 10K / 6M | authors, genres (tags), year | explicit | zygmuntz/goodbooks-10k |
 | 4 | **Amazon Toys & Games** (5-core) | e-com | 19.4K / 11.9K / 168K | categories, brand, TF-IDF(title/desc) | explicit (ratings) | SNAP 5-core (McAuley) |
 | 5 | **MIND** (MINDlarge) | news (EN) | 750K / 19.2K / 3.93M | category, subcategory, TF-IDF(title/abstract) | implicit (clicks) | HuggingFace `yjw1029/MIND` |

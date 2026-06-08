@@ -2,7 +2,28 @@
 
 Automatically generated from docstrings (mkdocstrings).
 
+## Quick start: `recommend()`
+
+The high-level entry point. Given donor scores it fits a cold-start method and
+returns ranked recommendations for cold items — the fastest way to get started.
+
+::: warmtransfer.recommend.recommend
+    options: { show_root_heading: true, heading_level: 3 }
+
+The structured result returned by `recommend()`:
+
+::: warmtransfer.recommend.AutoResult
+    options: { show_root_heading: true, heading_level: 3 }
+
 ## Contracts and types
+
+The canonical DataFrame column names shared across the whole API:
+
+::: warmtransfer.columns.Columns
+    options: { show_root_heading: true, heading_level: 3 }
+
+::: warmtransfer.holdout.HoldoutConfig
+    options: { show_root_heading: true, heading_level: 3 }
 
 ::: warmtransfer.types
     options:
@@ -96,4 +117,19 @@ Automatically generated from docstrings (mkdocstrings).
     options: { show_root_heading: true, heading_level: 3 }
 
 ::: warmtransfer.bench.splitters.pseudo_cold.PseudoColdSplitter
+    options: { show_root_heading: true, heading_level: 3 }
+
+## Utilities
+
+Seeding helpers for reproducible runs:
+
+::: warmtransfer.seeding
+    options:
+      members: [make_rng, set_global_seed]
+      show_root_heading: true
+      heading_level: 3
+
+Decorator to register a custom cold-start method in the `methods` registry:
+
+::: warmtransfer.methods.base.register_method
     options: { show_root_heading: true, heading_level: 3 }

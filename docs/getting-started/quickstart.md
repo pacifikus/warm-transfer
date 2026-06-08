@@ -22,6 +22,11 @@ method, and predict scores for cold-start items. It does not use `warmtransfer.b
 The full runnable script lives in the repository and is included here directly, so the docs cannot
 drift away from the checked example.
 
+!!! note
+    The `examples/` directory is only available when you clone the
+    [repository](https://github.com/pacifikus/warm-transfer); it is not shipped in the pip wheel.
+    If you installed via `pip`, copy the snippet below into a local file and run it directly.
+
 ```python
 --8<-- "examples/quickstart.py"
 ```
