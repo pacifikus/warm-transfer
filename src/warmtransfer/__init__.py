@@ -8,20 +8,25 @@ provided by the user.
 from __future__ import annotations
 
 from warmtransfer.columns import Columns
+from warmtransfer.holdout import HoldoutConfig
 from warmtransfer.methods.base import ColdStartMethod, methods, register_method
+from warmtransfer.recommend import AutoResult, recommend
 from warmtransfer.seeding import make_rng, set_global_seed
 from warmtransfer.types import Dataset, ItemFeatures, SplitResult, TransferInputs
 
 __all__ = [
+    "AutoResult",
     "ColdStartMethod",
     "Columns",
     "Dataset",
+    "HoldoutConfig",
     "ItemFeatures",
     "SplitResult",
     "TransferInputs",
     "__version__",
     "make_rng",
     "methods",
+    "recommend",
     "register_method",
     "set_global_seed",
 ]

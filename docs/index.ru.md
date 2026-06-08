@@ -71,9 +71,35 @@ neural donors; 4 промаха в основном на ML-1M, где baseline 
 - **`warmtransfer.bench`** — optional benchmark layer: dataset loaders, splitters, donor adapters и
   runner `warmbench`.
 
+## Быстрый вердикт: какой метод подойдёт моим данным?
+
+Не уверены, какой метод выбрать? Принесите взаимодействия, контент айтемов и скоры своей модели —
+`recommend` прогонит все применимые методы на честном псевдо-cold holdout и подскажет лучший (и
+стоит ли вообще использовать трансфер):
+
+```python
+import warmtransfer as wt
+
+result = wt.recommend(interactions, content, donor_scores)
+print(result)              # лидерборд + вердикт
+result.best_transfer       # лучший не-бейзлайн метод, напр. "linmap"
+result.predict(users, new_item_ids)   # победитель, дофиченный на всех warm
+```
+
+Или из терминала:
+
+```bash
+warmbench try --interactions inter.parquet --content content.parquet --scores scores.parquet
+```
+
+Оценка делается на holdout из ваших тёплых айтемов; донор не переобучается — трактуйте как
+слегка оптимистичный сигнал того, помогает ли трансфер. Готовый пример — в
+`examples/recommend_quickstart.py`.
+
 ## Куда дальше
 
 - Если вы впервые в проекте: начните с [Quickstart](getting-started/quickstart.md).
+- Если не уверены, какой метод подойдёт: дайте `recommend()` оценить их на ваших данных (см. *Быстрый вердикт* выше).
 - Если подключаете свою модель: читайте [Plug in a donor](how-to/add-donor.md).
 - Если выбираете метод: используйте [capability matrix](methods.md).
 - Если проверяете научную корректность: читайте [evaluation protocol](eval-protocol.md).

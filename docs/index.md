@@ -71,9 +71,35 @@ benchmark pages.
 - **`warmtransfer.bench`** is the optional benchmark layer: dataset loaders, splitters, donor adapters
   and the `warmbench` runner.
 
+## Quick verdict: which method fits my data?
+
+Not sure which method to pick? Bring your interactions, item content and your model's scores —
+`recommend` evaluates every feasible method on an honest pseudo-cold holdout and tells you the best
+one (and whether transfer is worth it at all):
+
+```python
+import warmtransfer as wt
+
+result = wt.recommend(interactions, content, donor_scores)
+print(result)              # leaderboard + verdict
+result.best_transfer       # best non-baseline method, e.g. "linmap"
+result.predict(users, new_item_ids)   # winner, refit on all warm data
+```
+
+Or from the terminal:
+
+```bash
+warmbench try --interactions inter.parquet --content content.parquet --scores scores.parquet
+```
+
+The estimate uses a holdout of your warm items; the donor is not retrained, so treat it as a
+mildly optimistic signal of whether transfer helps. A runnable example lives in
+`examples/recommend_quickstart.py`.
+
 ## Where to go next
 
 - New to the project: start with the [Quickstart](getting-started/quickstart.md).
+- Not sure which method fits: let `recommend()` score them on your own data (see *Quick verdict* above).
 - Bringing a trained model: read [Plug in a donor](how-to/add-donor.md).
 - Choosing between methods: use the [capability matrix](methods.md).
 - Checking scientific validity: read the [evaluation protocol](eval-protocol.md).
