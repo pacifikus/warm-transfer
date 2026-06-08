@@ -1,5 +1,6 @@
-# Example run: ML-1M × ALS × (baselines + naive KNN).
-# Minimal configuration to get started with the benchmark.
+# Example run: ML-1M × ALS × (baselines + naive KNN + calibrated linmap).
+# Minimal configuration to get started with the benchmark; linmap is the
+# headline calibrated-transfer method used in the tutorial narrative.
 
 datasets:
   - ml-1m
@@ -19,6 +20,9 @@ methods:
   - name: knn_score_avg
     params:
       k: 20
+  - name: linmap
+    params:
+      alpha: 10.0
 
 splitter:
   name: pseudo_cold

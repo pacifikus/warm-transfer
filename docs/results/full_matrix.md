@@ -1,3 +1,20 @@
+# Full matrix
+
+This is the full benchmark matrix from `configs/full_matrix.yaml`: **8 dataset loaders × 5 donors**
+(ALS, BPR, CatBoost, EASE, Two-Tower) at **seed=42**. Each row is one (dataset, donor, method)
+combination; one block of rows per dataset-donor cell lists every method on the same pseudo-cold
+holdout. Read the table by comparing the transfer methods (`linmap`, `stacking`, `stacking_plus`,
+`knn_score_avg`, …) against the strong personalized baseline `grouped_most_popular_pers` within each
+cell — the headline metric is per-user `auc`.
+
+**Headline result:** score transfer beats `grouped_most_popular_pers` by per-user AUC in **36 of 40
+dataset-donor cells**. The 4 misses are ML-1M × bpr/catboost/two_tower and amazon-toys × bpr, where the
+personalized baseline AUC is already high.
+
+> The matrix runs **12 of the 17 methods**. The 5 embedding/scaling variants (`attention_emb`,
+> `dropoutnet`, `linmap_emb`, `magnitude_scaling`, `scale_shift`) are excluded; for bilinear donors
+> `linmap` ≡ `linmap_emb`, so `linmap` already represents that family here.
+
 | dataset          | donor     | method                    |   donor_fit_seconds |   donor_score_seconds |   method_fit_seconds |   method_predict_seconds |     rss_mb |   recall@1 |   recall@5 |   recall@10 |   precision@1 |   precision@5 |   precision@10 |   map@1 |   map@5 |   map@10 |   ndcg@1 |   ndcg@5 |   ndcg@10 |   mrr@1 |   mrr@5 |   mrr@10 |    auc |   auc_global |   rela_impr |
 |:-----------------|:----------|:--------------------------|--------------------:|----------------------:|---------------------:|-------------------------:|-----------:|-----------:|-----------:|------------:|--------------:|--------------:|---------------:|--------:|--------:|---------:|---------:|---------:|----------:|--------:|--------:|---------:|-------:|-------------:|------------:|
 | amazon-toys      | als       | attention_knn             |              1.7693 |                5.2049 |               3.9380 |                   2.5001 |  4327.5898 |     0.0128 |     0.0514 |      0.0763 |        0.0240 |        0.0211 |         0.0161 |  0.0240 |  0.0269 |   0.0298 |   0.0240 |   0.0381 |    0.0470 |  0.0240 |  0.0442 |   0.0501 | 0.6895 |       0.7072 |     -0.0815 |

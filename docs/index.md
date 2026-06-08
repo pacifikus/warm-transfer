@@ -62,8 +62,11 @@ to Grouped MP. Calibrated transfer, especially `linmap` and `stacking_plus`, kee
 the donor scores and is much more robust. The benchmark spans matrix-factorization, GBDT, linear
 item-item and neural donors; the 4 misses are mostly on ML-1M, where the baseline AUC is already high.
 
-These numbers are single-seed results. Targeted multi-seed runs for marginal cells are tracked in the
-benchmark pages.
+These numbers are single-seed (seed=42) results. A separate multi-seed run estimates the **variance of
+the headline conclusion** on **3 domains (ML-1M, Goodbooks, KION) × ALS × 5 seeds** (see the
+[seed-spread results](results/seeds.md)); it confirms the headline is robust on those cells. It does
+**not** rerun the 4 marginal cells where transfer loses (ML-1M × bpr/catboost/two_tower,
+amazon-toys × bpr) — those are not in the multi-seed config and remain single-seed.
 
 ## Architecture
 

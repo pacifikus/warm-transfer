@@ -62,8 +62,11 @@ Grouped MP. Калиброванный transfer, особенно `linmap` и `s
 скоров донора и работает устойчивее. Бенчмарк покрывает matrix-factorization, GBDT, linear item-item и
 neural donors; 4 промаха в основном на ML-1M, где baseline AUC уже высокий.
 
-Эти числа получены на одном seed. Точечные multi-seed прогоны для пограничных ячеек отслеживаются на
-страницах бенчмарка.
+Эти числа получены на одном seed (seed=42). Отдельный multi-seed прогон оценивает **дисперсию
+headline-вывода** на **3 доменах (ML-1M, Goodbooks, KION) × ALS × 5 seeds** (см. [результаты по seed-разбросу](results/seeds.md));
+он подтверждает устойчивость headline на этих ячейках. Он **не** перепрогоняет 4 пограничные ячейки,
+где transfer проигрывает (ML-1M × bpr/catboost/two_tower, amazon-toys × bpr) — их нет в multi-seed
+конфиге, и они остаются single-seed.
 
 ## Архитектура
 
@@ -98,8 +101,8 @@ warmbench try --interactions inter.parquet --content content.parquet --scores sc
 
 ## Куда дальше
 
-- Если вы впервые в проекте: начните с [Quickstart](getting-started/quickstart.md).
+- Если вы впервые в проекте: начните с [Быстрого старта](getting-started/quickstart.md).
 - Если не уверены, какой метод подойдёт: дайте `recommend()` оценить их на ваших данных (см. *Быстрый вердикт* выше).
-- Если подключаете свою модель: читайте [Plug in a donor](how-to/add-donor.md).
-- Если выбираете метод: используйте [capability matrix](methods.md).
-- Если проверяете научную корректность: читайте [evaluation protocol](eval-protocol.md).
+- Если подключаете свою модель: читайте [Подключение донора](how-to/add-donor.md).
+- Если выбираете метод: используйте [матрицу возможностей](methods.md).
+- Если проверяете научную корректность: читайте [протокол оценки](eval-protocol.md).

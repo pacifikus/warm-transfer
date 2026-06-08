@@ -55,6 +55,7 @@ nav:
       - Tutorial (MovieLens): getting-started/tutorial.md
   - How-to:
       - how-to/index.md
+      - Quick verdict: how-to/quick-verdict.md
       - Plug in a donor: how-to/add-donor.md
       - Add your own method: how-to/add-method.md
       - Run the benchmark: how-to/run-benchmark.md
@@ -97,6 +98,7 @@ plugins:
             Installation: Установка
             Tutorial (MovieLens): Туториал (MovieLens)
             How-to: How-to
+            Quick verdict: Быстрый вердикт
             Plug in a donor: Как подключить донора
             Add your own method: Как добавить свой метод
             Run the benchmark: Как запустить бенчмарк

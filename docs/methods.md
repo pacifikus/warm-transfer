@@ -19,7 +19,7 @@ long-format `[user_id, item_id, score]` for cold items.
 | `linmap` | `content`, `donor_scores` | score-space mapping | :white_check_mark: | :white_check_mark: | :green_circle: low | you have donor scores and item content |
 | `stacking_plus` | `content`, `donor_scores`, `train_interactions`, `val` | supervised hybrid | :white_check_mark: | :white_check_mark: | :green_circle: low | a val-cold fold is available |
 | `stacking` | `content`, `donor_scores`, `similarity`, `train_interactions`, `val` | supervised hybrid | :white_check_mark: | :white_check_mark: | :yellow_circle: medium | you want KNN signal plus affinity/popularity features |
-| `scale_shift` | `content`, `donor_scores`, `similarity` | score calibration | :white_check_mark: | :white_check_mark: | :yellow_circle: medium | you want a scale/shift diagnostic over KNN scores |
+| `scale_shift` | `content`, `donor_scores`, `similarity` | score-space mapping | :white_check_mark: | :white_check_mark: | :yellow_circle: medium | you want a scale/shift diagnostic over KNN scores |
 | `logreg_calib` | `content`, `donor_scores`, `similarity`, `val` | supervised calibration | :white_check_mark: | :white_check_mark: | :yellow_circle: medium | you need a supervised diagnostic with val-cold labels |
 | `knn_score_avg` | `content`, `donor_scores`, `similarity` | content neighbors | :white_check_mark: | :x: | :red_circle: high | you need the simplest neighbor-score baseline |
 | `attention_knn` | `content`, `donor_scores`, `similarity` | content neighbors | :white_check_mark: | :x: | :red_circle: high | you want softmax-weighted neighbors |
