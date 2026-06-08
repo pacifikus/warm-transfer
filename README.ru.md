@@ -2,6 +2,10 @@
 
 # warm-transfer
 
+[![PyPI](https://img.shields.io/pypi/v/warm-transfer.svg)](https://pypi.org/project/warm-transfer/)
+[![Python](https://img.shields.io/pypi/pyversions/warm-transfer.svg)](https://pypi.org/project/warm-transfer/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 **Model-agnostic plug&play библиотека** для трансфера и калибровки скоров уже обученной
 рекомендательной модели на **новые (cold-start) айтемы** в условиях экстремальной
 разреженности, плюс воспроизводимый **бенчмарк**.
@@ -79,6 +83,16 @@ reco = LinMap(alpha=1.0).fit(inputs, seed=42).predict(
 Полный исполняемый пример: `examples/quickstart.py`.
 
 ## Установка
+
+```bash
+pip install warm-transfer            # ядро
+pip install "warm-transfer[bench]"   # + движки доноров и бенчмарк
+pip install "warm-transfer[all]"     # + deep (torch)
+```
+
+Или через uv: `uv add warm-transfer`.
+
+Из исходников (для разработки):
 
 ```bash
 uv sync                 # только ядро + dev
